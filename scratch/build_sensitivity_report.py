@@ -1,0 +1,216 @@
+import json
+
+# Load summary JSON to get exact figures
+with open('outputs/sensitivity_nei_label_audit/summary_sensitivity.json', 'r', encoding='utf-8') as fp:
+    s = json.load(fp)
+
+p_a = s['protocol_a_all_500_claims_nei_as_zero']
+p_b = s['protocol_b_supports_refutes_only_334_claims']
+
+doc = []
+doc.append("# NEI Evidence Label Sensitivity Audit: Evidence-Label Semantics, Closed-Pool Boundaries, and Re-evaluation of Experiment 2\n\n")
+doc.append("**Audit Date:** 2026-10-20  \n")
+doc.append("**Audit Type:** Read-Only Dataset Label Semantics & Sensitivity Analysis  \n")
+doc.append("**Scope:** Evaluation of Evidence-Label Semantics in FEVER (`copenlu/fever_gold_evidence`), Correction of NOT_ENOUGH_INFO (NEI) Evidence Annotations, and Comparative Sensitivity of Formal Experiment 2 Metrics  \n")
+doc.append("**Status:** COMPLETE — SENSITIVITY ARTIFACTS PRESERVED — OFFICIAL FROZEN RESULTS PRESERVED — PHASE 14 NOT STARTED\n\n")
+
+doc.append("----\n\n")
+
+doc.append("## 1. Executive Summary & Strict Safety Compliance\n\n")
+doc.append("This sensitivity audit investigates the semantic validity of gold-evidence proxy labels in the FEVER development split (`copenlu/fever_gold_evidence`) and evaluates the robustness of the comparative findings of **Formal Experiment 2** (Fuzzy Evidence Reliability Reasoning vs. Non-Fuzzy Weighted Baseline).\n\n")
+doc.append("### 1.1 Core Defect Identified in Upstream Dataset Semantics\n")
+doc.append("In the standard FEVER formulation (Thorne et al., 2018), claims labelled `SUPPORTS` or `REFUTES` possess human-annotated gold evidence sentences from Wikipedia. Conversely, claims labelled `NOT ENOUGH INFO` (NEI) are unverified by definition and have **no gold evidence**.\n")
+doc.append("However, in the preprocessed HuggingFace dataset `copenlu/fever_gold_evidence` (derived from Stammbach et al. / Papelo et al.), candidate retrieved passages were pre-populated into the `evidence` field for NEI claims. In the project's data ingestion (`data/fever_loader.py`) and formal evaluation code (`experiments/experiment2_formal.py`), these NEI pseudo-evidence passages were treated indiscriminately as 'gold evidence' proxy labels.\n\n")
+doc.append("Of the **443 positive gold instances** in the official frozen Experiment 2 dataset, exactly **147 instances (33.18%)** belong to NEI claims. These 147 instances represent retrieved negative distractors rather than genuine annotator-verified evidence.\n\n")
+
+doc.append("### 1.2 Sensitivity Findings at a Glance\n")
+doc.append("When evidence-label semantics are rigorously corrected, the primary finding of Experiment 2 is **strengthened, not weakened**:\n")
+doc.append("1. **Fuzzy AUROC Advantage More Than Doubles:**\n")
+doc.append("   - Official Frozen Run: Fuzzy AUROC exceeded Baseline by $+0.0365$ ($p = 0.0240$, significant at $\\alpha = 0.05$).\n")
+doc.append("   - **Sensitivity Protocol A (NEI treated as 0):** Fuzzy AUROC exceeds Baseline by **$+0.0898$** (Fuzzy $0.7386$ vs. Baseline $0.6488$; Holm-adjusted $p = 0.0020$, significant at $\\alpha = 0.025$).\n")
+doc.append("   - **Sensitivity Protocol B (NEI excluded; Verifiable claims only):** Fuzzy AUROC exceeds Baseline by **$+0.0827$** (Fuzzy $0.7777$ vs. Baseline $0.6949$; Holm-adjusted $p = 0.0020$, significant at $\\alpha = 0.025$).\n")
+doc.append("2. **Baseline AP Advantage Shrinks:**\n")
+doc.append("   - The Average Precision advantage held by the baseline under dynamic conditions drops from $-0.1396$ (official) to **$-0.0680$** (Protocol A) and **$-0.1098$** (Protocol B).\n")
+doc.append("3. **Top-1 Gold Selection Fidelity:**\n")
+doc.append("   - When true gold evidence is retrieved in the top 3 (283 verifiable claims), Fuzzy logic selects gold evidence as Rank 1 in **87.63%** of claims (248/283), compared to **83.39%** for Baseline (236/283), an advantage of $+4.24\\%$.\n\n")
+
+doc.append("### 1.3 Strict Safety & Protocol Boundaries\n")
+doc.append("- **No Overwriting:** Frozen results (`outputs/phase10_formal/results.csv` and `outputs/phase11_formal/results.csv`) remain completely untouched and unmodified.\n")
+doc.append("- **Isolated Destination:** All corrected datasets, sensitivity JSON summaries, and plots reside exclusively in `outputs/sensitivity_nei_label_audit/`.\n")
+doc.append("- **Epistemic Label:** All findings herein are strictly designated as **Sensitivity Analyses**, supplementing rather than replacing the official historical experiment record.\n")
+doc.append("- **Phase 14 Gate:** Phase 14 has **NOT** been started.\n\n")
+
+doc.append("----\n\n")
+
+doc.append("## 2. Audit of Evidence-Label Semantics in the Implementation\n\n")
+doc.append("### 2.1 Upstream Dataset Provenance & Ingestion\n")
+doc.append("The project streams `copenlu/fever_gold_evidence` via `data/fever_loader.py`. In `_normalize_record` (lines 77–115):\n")
+doc.append("```python\n")
+doc.append("# data/fever_loader.py: Lines 94-114\n")
+doc.append("evidence_pieces: List[EvidencePiece] = []\n")
+doc.append("for ev_group in raw.get('evidence', []):\n")
+doc.append("    doc_title = str(ev_group[0])\n")
+doc.append("    sentence_idx = int(ev_group[1]) if ev_group[1] is not None else 0\n")
+doc.append("    ev_text = _clean_text(str(ev_group[2]))\n")
+doc.append("    ev_id = _make_evidence_id(doc_title, sentence_idx)\n")
+doc.append("    evidence_pieces.append(EvidencePiece(evidence_id=ev_id, text=ev_text, ...))\n")
+doc.append("return ClaimRecord(claim_id=claim_id, label=label_raw, evidence=evidence_pieces, ...)\n")
+doc.append("```\n")
+doc.append("**Defect:** The loader normalizes `evidence_pieces` for every claim regardless of whether `label_raw` is `SUPPORTS`, `REFUTES`, or `NOT_ENOUGH_INFO`.\n\n")
+
+doc.append("### 2.2 Formal Experiment 2 Label Derivation\n")
+doc.append("In `experiments/experiment2_formal.py` (lines 99–100 and 469–470):\n")
+doc.append("```python\n")
+doc.append("# experiments/experiment2_formal.py: Lines 469-470\n")
+doc.append("gold_ids = {ep.evidence_id for ep in rec.evidence}\n")
+doc.append("is_gold = 1 if ev.evidence_id in gold_ids else 0\n")
+doc.append("```\n")
+doc.append("Because `rec.evidence` was non-empty for all 166 evaluated NEI claims (each containing exactly 1 candidate passage from Papelo retrieval), any retrieved passage matching this ID was labelled `is_annotated_gold = 1`.\n\n")
+
+doc.append("### 2.3 Breakdown of the Official Frozen Label Distribution\n")
+doc.append("The 500 evaluated FEVER claims partition into three balanced classes:\n")
+doc.append("| Claim Label | Evaluated Claims | Evidence per Claim | Total Retrieved Rows | Annotated Gold Rows (`is_gold=1`) | Distractor Rows (`is_gold=0`) |\n")
+doc.append("|:---|:---:|:---:|:---:|:---:|:---:|\n")
+doc.append("| **SUPPORTS** | 168 | 3 | 504 | 154 (30.56%) | 350 (69.44%) |\n")
+doc.append("| **REFUTES** | 166 | 3 | 498 | 142 (28.51%) | 356 (71.49%) |\n")
+doc.append("| **NOT_ENOUGH_INFO** | 166 | 3 | 498 | **147 (29.52%)** | 351 (70.48%) |\n")
+doc.append("| **Total (Official Exp 2)** | **500** | **3** | **1,500** | **443 (29.53%)** | **1,057 (70.47%)** |\n\n")
+doc.append("In genuine FEVER semantics, all 147 NEI positive labels are pseudo-evidence distractors. They do not substantiate the claim.\n\n")
+
+doc.append("----\n\n")
+
+doc.append("## 3. Reconstructed Label Dataset Artifacts\n\n")
+doc.append("A dedicated sensitivity directory was established at `outputs/sensitivity_nei_label_audit/`.\n")
+doc.append("The complete 1,500-row evaluation dataset was reconstructed and saved to:\n")
+doc.append("- [`outputs/sensitivity_nei_label_audit/results_nei_sensitivity.csv`](file:///c:/Users/dheer/OneDrive/Documents/Fuzzy-Causal%20Evidence%20Attribution%20for%20Explainable%20RAG-Based%20Fact-Checking/outputs/sensitivity_nei_label_audit/results_nei_sensitivity.csv)\n\n")
+doc.append("This file preserves all 39 original columns from `outputs/phase11_formal/results.csv` and appends four explicit audit columns:\n")
+doc.append("1. `claim_label`: FEVER class (`SUPPORTS`, `REFUTES`, or `NOT_ENOUGH_INFO`).\n")
+doc.append("2. `is_gold_protocol_a`: Binary indicator where NEI evidence is reclassified as 0 (distractor). Contains exactly 296 ones and 1,204 zeros.\n")
+doc.append("3. `in_protocol_b`: Boolean indicator denoting verifiable claims (`True` for 1,002 rows across 334 SUPPORTS/REFUTES claims; `False` for 498 NEI rows).\n")
+doc.append("4. `is_gold_protocol_b`: Ground-truth indicator for Protocol B (NaN for NEI rows; exactly 296 ones and 706 zeros for verifiable rows).\n\n")
+
+doc.append("----\n\n")
+
+doc.append("## 4. Sensitivity Protocol A: All 500 Claims (NEI Evidence Reclassified as Distractor)\n\n")
+doc.append("### 4.1 Specification\n")
+doc.append("- **Evaluation Population:** All 500 claims ($N = 1,500$ evidence evaluations).\n")
+doc.append("- **Label Semantic:** Genuine gold evidence exists only for SUPPORTS and REFUTES claims. For NEI claims, any retrieved passage is a distractor ($y = 0$).\n")
+doc.append("- **Sample Sizes:** $296$ gold instances ($19.73\\%$), $1,204$ distractors ($80.27\\%$).\n")
+doc.append("- **Claims with Gold in Top-3:** 283 claims ($56.60\\%$); Claims with zero gold: 217 claims ($43.40\\%$).\n\n")
+
+doc.append("### 4.2 Statistical Inference & Co-Primary Metrics (Dynamic Pipeline)\n")
+doc.append("Evaluated using $B = 1,000$ paired claim-level cluster bootstrap iterations with null-shift centering and Holm–Bonferroni step-down correction:\n\n")
+doc.append("| Hypothesis / Metric | Point Est. Fuzzy | Point Est. Baseline | Difference ($\\hat{\\Delta}$) | 95% Marginal CI | 97.5% Bonferroni CI | Raw $p$-value | Holm-Adj. $p$ | Significant? (FWER $\\alpha=0.05$) |\n")
+doc.append("|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n")
+doc.append(f"| **H1: AUROC** | {p_a['dynamic_pipeline_results']['H1_AUROC']['point_estimate_fuzzy']:.4f} | {p_a['dynamic_pipeline_results']['H1_AUROC']['point_estimate_base']:.4f} | **+{p_a['dynamic_pipeline_results']['H1_AUROC']['delta_hat']:.4f}** | [{p_a['dynamic_pipeline_results']['H1_AUROC']['ci_95_marginal'][0]:.4f}, {p_a['dynamic_pipeline_results']['H1_AUROC']['ci_95_marginal'][1]:.4f}] | [{p_a['dynamic_pipeline_results']['H1_AUROC']['ci_975_bonferroni'][0]:.4f}, {p_a['dynamic_pipeline_results']['H1_AUROC']['ci_975_bonferroni'][1]:.4f}] | {p_a['dynamic_pipeline_results']['H1_AUROC']['p_value_raw']:.4f} | **{p_a['dynamic_pipeline_results']['H1_AUROC']['p_value_holm_adjusted']:.4f}** | **YES** ($\\alpha=0.025$) |\n")
+doc.append(f"| **H2: Average Precision** | {p_a['dynamic_pipeline_results']['H2_AP']['point_estimate_fuzzy']:.4f} | {p_a['dynamic_pipeline_results']['H2_AP']['point_estimate_base']:.4f} | **{p_a['dynamic_pipeline_results']['H2_AP']['delta_hat']:.4f}** | [{p_a['dynamic_pipeline_results']['H2_AP']['ci_95_marginal'][0]:.4f}, {p_a['dynamic_pipeline_results']['H2_AP']['ci_95_marginal'][1]:.4f}] | [{p_a['dynamic_pipeline_results']['H2_AP']['ci_975_bonferroni'][0]:.4f}, {p_a['dynamic_pipeline_results']['H2_AP']['ci_975_bonferroni'][1]:.4f}] | {p_a['dynamic_pipeline_results']['H2_AP']['p_value_raw']:.4f} | **{p_a['dynamic_pipeline_results']['H2_AP']['p_value_holm_adjusted']:.4f}** | **YES** ($\\alpha=0.05$) |\n\n")
+
+doc.append("### 4.3 Top-1 Selection Metrics (Protocol A)\n")
+top_a = p_a['top1_alignment_metrics']
+doc.append(f"- **Metric A (Denominator = All 500 Claims):** Fuzzy selects gold in **{top_a['metric_a_all_claims']['fuzzy_hits']} / 500 claims ({top_a['metric_a_all_claims']['fuzzy_rate']*100:.2f}%)** vs. Baseline **{top_a['metric_a_all_claims']['baseline_hits']} / 500 ({top_a['metric_a_all_claims']['baseline_rate']*100:.2f}%)**, Difference = **+{top_a['metric_a_all_claims']['difference']*100:.2f}%**.\n")
+doc.append(f"- **Metric B (Denominator = 283 Gold-Present Claims):** Fuzzy selects gold in **{top_a['metric_b_gold_present_claims']['fuzzy_hits']} / 283 ({top_a['metric_b_gold_present_claims']['fuzzy_rate']*100:.2f}%)** vs. Baseline **{top_a['metric_b_gold_present_claims']['baseline_hits']} / 283 ({top_a['metric_b_gold_present_claims']['baseline_rate']*100:.2f}%)**, Difference = **+{top_a['metric_b_gold_present_claims']['difference']*100:.2f}%**.\n")
+doc.append(f"- **Metric C (Direct Agreement):** Fuzzy and Baseline select the identical Rank 1 passage in **{top_a['metric_c_direct_agreement']['agreed_claims']} / 500 claims ({top_a['metric_c_direct_agreement']['agreement_rate']*100:.2f}%)**.\n\n")
+
+doc.append("----\n\n")
+
+doc.append("## 5. Sensitivity Protocol B: Verifiable Claims Only (SUPPORTS & REFUTES Exclusively)\n\n")
+doc.append("### 5.1 Specification\n")
+doc.append("- **Evaluation Population:** 334 verifiable claims ($N = 1,002$ evidence evaluations), completely omitting the 166 NEI claims.\n")
+doc.append("- **Label Semantic:** Strictly evaluates gold-evidence discrimination where ground-truth gold evidence was annotated by human experts.\n")
+doc.append("- **Sample Sizes:** $296$ gold instances ($29.54\\%$), $706$ distractors ($70.46\\%$).\n")
+doc.append("- **Claims with Gold in Top-3:** 283 claims ($84.73\\%$); Claims with zero gold: 51 claims ($15.27\\%$).\n\n")
+
+doc.append("### 5.2 Statistical Inference & Co-Primary Metrics (Dynamic Pipeline)\n")
+doc.append("Evaluated using $B = 1,000$ paired claim-level cluster bootstrap iterations:\n\n")
+doc.append("| Hypothesis / Metric | Point Est. Fuzzy | Point Est. Baseline | Difference ($\\hat{\\Delta}$) | 95% Marginal CI | 97.5% Bonferroni CI | Raw $p$-value | Holm-Adj. $p$ | Significant? (FWER $\\alpha=0.05$) |\n")
+doc.append("|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n")
+doc.append(f"| **H1: AUROC** | {p_b['dynamic_pipeline_results']['H1_AUROC']['point_estimate_fuzzy']:.4f} | {p_b['dynamic_pipeline_results']['H1_AUROC']['point_estimate_base']:.4f} | **+{p_b['dynamic_pipeline_results']['H1_AUROC']['delta_hat']:.4f}** | [{p_b['dynamic_pipeline_results']['H1_AUROC']['ci_95_marginal'][0]:.4f}, {p_b['dynamic_pipeline_results']['H1_AUROC']['ci_95_marginal'][1]:.4f}] | [{p_b['dynamic_pipeline_results']['H1_AUROC']['ci_975_bonferroni'][0]:.4f}, {p_b['dynamic_pipeline_results']['H1_AUROC']['ci_975_bonferroni'][1]:.4f}] | {p_b['dynamic_pipeline_results']['H1_AUROC']['p_value_raw']:.4f} | **{p_b['dynamic_pipeline_results']['H1_AUROC']['p_value_holm_adjusted']:.4f}** | **YES** ($\\alpha=0.025$) |\n")
+doc.append(f"| **H2: Average Precision** | {p_b['dynamic_pipeline_results']['H2_AP']['point_estimate_fuzzy']:.4f} | {p_b['dynamic_pipeline_results']['H2_AP']['point_estimate_base']:.4f} | **{p_b['dynamic_pipeline_results']['H2_AP']['delta_hat']:.4f}** | [{p_b['dynamic_pipeline_results']['H2_AP']['ci_95_marginal'][0]:.4f}, {p_b['dynamic_pipeline_results']['H2_AP']['ci_95_marginal'][1]:.4f}] | [{p_b['dynamic_pipeline_results']['H2_AP']['ci_975_bonferroni'][0]:.4f}, {p_b['dynamic_pipeline_results']['H2_AP']['ci_975_bonferroni'][1]:.4f}] | {p_b['dynamic_pipeline_results']['H2_AP']['p_value_raw']:.4f} | **{p_b['dynamic_pipeline_results']['H2_AP']['p_value_holm_adjusted']:.4f}** | **YES** ($\\alpha=0.05$) |\n\n")
+
+doc.append("### 5.3 Top-1 Selection Metrics (Protocol B)\n")
+top_b = p_b['top1_alignment_metrics']
+doc.append(f"- **Metric A (Denominator = All 334 Verifiable Claims):** Fuzzy selects gold in **{top_b['metric_a_all_claims']['fuzzy_hits']} / 334 claims ({top_b['metric_a_all_claims']['fuzzy_rate']*100:.2f}%)** vs. Baseline **{top_b['metric_a_all_claims']['baseline_hits']} / 334 ({top_b['metric_a_all_claims']['baseline_rate']*100:.2f}%)**, Difference = **+{top_b['metric_a_all_claims']['difference']*100:.2f}%**.\n")
+doc.append(f"- **Metric B (Denominator = 283 Gold-Present Claims):** Fuzzy selects gold in **{top_b['metric_b_gold_present_claims']['fuzzy_hits']} / 283 ({top_b['metric_b_gold_present_claims']['fuzzy_rate']*100:.2f}%)** vs. Baseline **{top_b['metric_b_gold_present_claims']['baseline_hits']} / 283 ({top_b['metric_b_gold_present_claims']['baseline_rate']*100:.2f}%)**, Difference = **+{top_b['metric_b_gold_present_claims']['difference']*100:.2f}%**.\n")
+doc.append(f"- **Metric C (Direct Agreement):** Fuzzy and Baseline select the identical Rank 1 passage in **{top_b['metric_c_direct_agreement']['agreed_claims']} / 334 claims ({top_b['metric_c_direct_agreement']['agreement_rate']*100:.2f}%)**.\n\n")
+
+doc.append("----\n\n")
+
+doc.append("## 6. Comprehensive Cross-Protocol Comparative Synthesis\n\n")
+doc.append("The table below synthesizes the official frozen experiment results against both sensitivity protocols:\n\n")
+doc.append("| Metric / Evaluated Dimension | Official Frozen (Exp 2) | Sensitivity Protocol A (All 500, NEI=0) | Sensitivity Protocol B (334 SUPP/REF Only) |\n")
+doc.append("|:---|:---:|:---:|:---:|\n")
+doc.append("| **Evaluated Population** | 500 claims (1,500 rows) | 500 claims (1,500 rows) | 334 claims (1,002 rows) |\n")
+doc.append("| **Gold Evidence Instances ($y=1$)** | 443 (29.53%) | 296 (19.73%) | 296 (29.54%) |\n")
+doc.append("| **Distractor Instances ($y=0$)** | 1,057 (70.47%) | 1,204 (80.27%) | 706 (70.46%) |\n")
+doc.append("| **Claims with Gold in Top-3** | 430 / 500 (86.00%) | 283 / 500 (56.60%) | 283 / 334 (84.73%) |\n")
+doc.append("| **Claims with Zero Gold in Top-3** | 70 / 500 (14.00%) | 217 / 500 (43.40%) | 51 / 334 (15.27%) |\n")
+doc.append("| **Dynamic AUROC: Fuzzy** | 0.7630 | 0.7386 | 0.7777 |\n")
+doc.append("| **Dynamic AUROC: Baseline** | 0.7265 | 0.6488 | 0.6949 |\n")
+doc.append("| **AUROC Advantage ($\\hat{\\Delta}$)** | **+0.0365** | **+0.0898** | **+0.0827** |\n")
+doc.append("| **AUROC 95% Marginal CI** | [0.0053, 0.0686] | [0.0503, 0.1281] | [0.0455, 0.1213] |\n")
+doc.append("| **AUROC Holm-Adjusted $p$** | 0.0240 (sig at $\\alpha=0.05$) | 0.0020 (sig at $\\alpha=0.025$) | 0.0020 (sig at $\\alpha=0.025$) |\n")
+doc.append("| **Dynamic AP: Fuzzy** | 0.4884 | 0.3537 | 0.5091 |\n")
+doc.append("| **Dynamic AP: Baseline** | 0.6280 | 0.4217 | 0.6189 |\n")
+doc.append("| **AP Advantage ($\\hat{\\Delta}$)** | **-0.1396** | **-0.0680** | **-0.1098** |\n")
+doc.append("| **AP 95% Marginal CI** | [-0.1777, -0.1025] | [-0.1089, -0.0319] | [-0.1518, -0.0632] |\n")
+doc.append("| **AP Holm-Adjusted $p$** | 0.0020 (sig at $\\alpha=0.025$) | 0.0020 (sig at $\\alpha=0.05$) | 0.0020 (sig at $\\alpha=0.05$) |\n")
+doc.append("| **Top-1 Gold Hit Rate (Metric A)** | Fuzzy 73.0% vs Base 69.0% | Fuzzy 49.6% vs Base 47.2% | Fuzzy 74.3% vs Base 70.7% |\n")
+doc.append("| **Top-1 Gold Hit Rate (Metric B)** | Fuzzy 84.9% vs Base 80.2% | Fuzzy 87.6% vs Base 83.4% | Fuzzy 87.6% vs Base 83.4% |\n")
+doc.append("| **Top-1 Direct Agreement (Metric C)** | 87.4% (437/500) | 87.4% (437/500) | 89.2% (298/334) |\n")
+doc.append("| **Static Ablation AUROC** | Fuzzy 0.7946 vs Base 0.8889 | Fuzzy 0.7888 vs Base 0.8661 | Fuzzy 0.8210 vs Base 0.9107 |\n")
+doc.append("| **Static Ablation AP** | Fuzzy 0.5550 vs Base 0.7600 | Fuzzy 0.4757 vs Base 0.6360 | Fuzzy 0.6038 vs Base 0.8086 |\n\n")
+
+doc.append("### 6.1 Key Methodological Insights\n")
+doc.append("1. **The Fuzzy AUROC Advantage is Robust to Label Semantics:**\n")
+doc.append("   In the official experiment, critics might have questioned whether the $+0.0365$ AUROC advantage was driven by arbitrary pseudo-evidence attached to NEI claims. The sensitivity audit proves the exact opposite: **reclassifying or removing NEI pseudo-evidence substantially increases the fuzzy advantage to $+0.0898$ (Protocol A) and $+0.0827$ (Protocol B)**. Both lower bounds of the 95% marginal and 97.5% Bonferroni CIs are strictly greater than zero.\n")
+doc.append("2. **Reason for Baseline Degradation on Clean Gold Labels:**\n")
+doc.append("   Under dynamic conditions, the baseline scoring formula multiplies by $(1 - \\text{contradiction})$. For verifiable claims (`SUPPORTS` and `REFUTES`), when the cross-encoder verifier detects contradiction among retrieved distractors, the baseline adjusted score collapses to 0.0 for all 3 evidence items. In contrast, the fuzzy logic engine's centroid defuzzification smoothly downweights evidence without zeroing out valid items, preserving discriminative ranking power.\n")
+doc.append("3. **Average Precision Trade-off Persists but Narrows:**\n")
+doc.append("   Under both sensitivity protocols, the baseline maintains higher Average Precision under dynamic conditions, but the margin shrinks from $-0.1396$ to $-0.0680$ in Protocol A and $-0.1098$ in Protocol B. This confirms the nuanced scientific conclusion: fuzzy logic optimizes global ranking discrimination (AUROC), while the weighted baseline produces a steeper precision curve on highly ranked subsets.\n\n")
+
+doc.append("----\n\n")
+
+doc.append("## 7. Limitations of the 808-Passage Closed Candidate Pool vs. Open-Domain Wikipedia Retrieval\n\n")
+doc.append("A critical threat to validity in scientific dissemination is the conflation of candidate-pool retrieval with open-domain information retrieval.\n\n")
+doc.append("### 7.1 Structure of the Closed Candidate Pool\n")
+doc.append("- The corpus `data/evidence_corpus.json` contains exactly **808 passage records**.\n")
+doc.append("- It was constructed by pooling the evidence annotations of the 750 claims in `data/fever_dev.jsonl`.\n")
+doc.append("- For the 334 verifiable claims in Experiment 2, all 374 distinct gold passages were placed directly into this 808-passage pool (**100% corpus inclusion rate**).\n")
+doc.append("- The remaining passages serve as local distractors.\n\n")
+
+doc.append("### 7.2 Distinguishing Closed-Pool Retrieval from Full-Wikipedia Search\n")
+doc.append("| Dimension | Project Evaluation Setup | True Open-Domain Wikipedia Retrieval |\n")
+doc.append("|:---|:---|:---|\n")
+doc.append("| **Candidate Pool Size** | **808 passages** | **~5.4 million Wikipedia articles (>30 million sentences)** |\n")
+doc.append("| **Gold Availability** | **100.0% guaranteed present** | Search space requires document discovery + sentence extraction |\n")
+doc.append("| **Top-3 Retrieval Recall** | **84.73% (verifiable claims)** | Standard dense retrievers achieve ~50%–65% Top-3 sentence recall on FEVER |\n")
+doc.append("| **Evaluation Focus** | **Within-context evidence attribution & ranking** | End-to-end open-domain information retrieval |\n\n")
+
+doc.append("> [!IMPORTANT]\n")
+doc.append("> **Formal Boundary Statement:** All retrieval recall metrics (84.7% for verifiable claims; 86.0% in official pool) and all downstream evidence discrimination metrics (AUROC 0.7630 / 0.7777) must be presented with the explicit qualifier: *'Conditioned on a closed candidate pool of 808 passages'*. They must never be claimed as full open-domain Wikipedia retrieval recall.\n\n")
+
+doc.append("----\n\n")
+
+doc.append("## 8. Summary of Generated Sensitivity Artifacts\n\n")
+doc.append("All sensitivity analysis outputs have been generated cleanly and preserved in `outputs/sensitivity_nei_label_audit/`:\n")
+doc.append("```\n")
+doc.append("outputs/sensitivity_nei_label_audit/\n")
+doc.append("├── results_nei_sensitivity.csv       # 1,500 rows with original columns + 4 audit columns\n")
+doc.append("├── summary_sensitivity.json          # Machine-readable metrics, CIs, p-values, Holm corrections\n")
+doc.append("└── plots/\n")
+doc.append("    ├── sensitivity_roc_curves.png    # High-resolution ROC curves for Protocol A and Protocol B\n")
+doc.append("    └── sensitivity_pr_curves.png     # High-resolution PR curves for Protocol A and Protocol B\n")
+doc.append("```\n\n")
+
+doc.append("## 9. Mandatory Phase Gate Freeze\n\n")
+doc.append("In strict compliance with user instructions:\n")
+doc.append("- No existing project source code was modified.\n")
+doc.append("- No frozen experimental outputs under `outputs/phase10_formal/` or `outputs/phase11_formal/` were modified or overwritten.\n")
+doc.append("- No models, retrievers, or explainers were rerun.\n")
+doc.append("- Phase 14 has **NOT** been started.\n")
+doc.append("- All sensitivity data and findings are preserved for user review.\n")
+
+with open('DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md', 'w', encoding='utf-8') as fp:
+    fp.writelines(doc)
+
+print('DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md successfully generated.')

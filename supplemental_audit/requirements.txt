@@ -1,0 +1,28 @@
+# Phase 1 dependencies
+pyyaml>=6.0
+numpy>=1.24.0
+pytest>=7.0
+
+# Phase 2 dependencies
+datasets>=2.14.0
+
+# Phase 3 dependencies
+rank-bm25>=0.2.2
+sentence-transformers>=2.2.0
+faiss-cpu>=1.7.0
+
+# Phase 4 dependencies
+transformers>=4.30.0
+torch>=2.0.0
+sentencepiece>=0.1.99
+
+# Phase 5 dependencies
+shap>=0.41.0
+scikit-learn>=1.0.2
+lime>=0.2.0.1
+
+# Phase 7 dependencies
+scikit-fuzzy>=0.4.2
+
+# Phase 9 dependencies
+streamlit>=1.30.0

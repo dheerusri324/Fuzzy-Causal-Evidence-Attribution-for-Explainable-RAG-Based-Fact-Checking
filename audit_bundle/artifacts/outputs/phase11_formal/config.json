@@ -1,0 +1,29 @@
+{
+    "experiment": "Experiment 2 Formal Evaluation",
+    "dataset": "FEVER dev split (first 500 claims)",
+    "retrieval_mode": "hybrid",
+    "top_k": 3,
+    "candidate_pool_size": 808,
+    "embedding_model": "all-MiniLM-L6-v2",
+    "verifier_model": "cross-encoder/nli-deberta-v3-base",
+    "fuzzy_weights": {
+        "shap_weight": 0.5,
+        "lime_weight": 0.5
+    },
+    "baseline_weights": {
+        "relevance": 0.3,
+        "attribution_strength": 0.25,
+        "intervention_influence": 0.25,
+        "source_reliability": 0.1,
+        "stability": 0.1
+    },
+    "bootstrap": {
+        "replicates": 1000,
+        "seed": 42,
+        "resampling_unit": "claim_level_cluster",
+        "preserves_multiplicity": true,
+        "null_centering": true
+    },
+    "co_primary_alpha": 0.05,
+    "multiple_testing_correction": "Holm-Bonferroni"
+}

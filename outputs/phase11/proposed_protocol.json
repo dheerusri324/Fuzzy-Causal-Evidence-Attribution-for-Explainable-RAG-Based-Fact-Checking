@@ -1,0 +1,322 @@
+{
+    "experiment_metadata": {
+        "experiment_name": "Experiment 2 — Comparative Evaluation of Fuzzy Evidence Reasoning vs. Linear Baseline",
+        "phase": 11,
+        "status": "PROTOCOL_FROZEN_AWAITING_EXECUTION_APPROVAL",
+        "date_created": "2026-10-18T22:10:00",
+        "date_refined": "2026-10-18T22:25:00",
+        "date_methodological_review": "2026-10-18T22:45:00",
+        "date_final_statistical_audit": "2026-10-19T19:30:00",
+        "prerequisite_experiment": "Experiment 1 (Frozen, Phase 10 & 12)",
+        "approved_decisions": {
+            "decision_d1": "Option C — Dual Evaluation (Primary Condition: Dynamic Conflict & Stability; Secondary Ablation: Static Defaults c_deg=0.0, s_stab=1.0)",
+            "decision_d2": "Option A — Primary Comparison (Fuzzy Primary: evidence_reliability; Baseline Primary: adjusted_baseline_score; Secondary Diagnostics: explanation_confidence, baseline_score)"
+        },
+        "author": "Antigravity Research Agent"
+    },
+    "research_question": {
+        "primary_question": "Does fuzzy evidence-reliability scoring distinguish FEVER-annotated gold evidence from other retrieved passages differently from the existing non-fuzzy weighted baseline?",
+        "ground_truth_proxy_nature": {
+            "annotated_gold_evidence": "Passages explicitly annotated by FEVER human annotators as forming a minimal sufficient set to verify or refute the claim.",
+            "unannotated_retrieved_evidence": "Passages retrieved by BM25/dense search from the candidate pool that do not carry a FEVER gold annotation for that claim. These passages must NOT be equated with 'definitely irrelevant' or 'factually incorrect'; they may be unannotated relevant passages, partially relevant background sentences, or true alternative statements that annotators did not select.",
+            "intrinsic_factual_relevance": "The semantic and factual relationship between a passage and a claim, which can exist independently of whether annotators labeled that specific sentence.",
+            "composite_evidence_reliability": "A multi-attribute construct incorporating factual relevance, causal necessity (intervention influence), explainer attribution, source credibility, and cross-evidence conflict/stability.",
+            "metric_framing": "AUROC and Average Precision measure discrimination against the available FEVER gold annotation proxy, NOT direct measurements of real-world evidence reliability or factual truth."
+        },
+        "pooled_discrimination_scope": "Pooled AUROC and Average Precision evaluate global discrimination across the 1,500 pooled evidence instances. Claim-level cluster bootstrapping handles intra-cluster dependence, but pooled metrics assume scores are comparable across claims. Within-claim Top-1 hit rates complement pooled metrics by evaluating within-claim ranking independent of cross-claim calibration.",
+        "evaluation_pool_context": "Evaluation is conducted over a closed candidate pool of 808 passages pre-seeded with gold evidence from evaluated claims (534 gold passages present). The evaluation population consists of 1,500 retrieved instances (443 gold, 1,057 distractors). Results reflect this gold-conditioned setting rather than full-Wikipedia open retrieval, and may favor neither method; both methods may demonstrate low discrimination.",
+        "secondary_questions": [
+            "How do fuzzy primary scoring (evidence_reliability) and baseline primary scoring (adjusted_baseline_score) compare in discriminative performance (AUROC and Average Precision / PR-AUC) against FEVER gold annotations?",
+            "How do the systems differ in Top-1 evidence selection across all 500 claims and within the subset of 430 claims containing at least one gold evidence piece?",
+            "In the causal attribution-gap subgroup (high attribution strength but low intervention influence), does Rule 2 selectively suppress explanation_confidence compared to the additive baseline_score, and what secondary effect does this have on evidence_reliability?",
+            "What is the marginal impact of dynamic conflict and permutation stability inputs compared to static schema defaults (contradiction=0.0, stability=1.0) across both systems in a dual evaluation?"
+        ]
+    },
+    "verified_input_signal_construction": {
+        "attribution_strength": {
+            "raw_fields_used": ["SHAP_score_raw", "LIME_score_raw"],
+            "absolute_magnitudes": true,
+            "normalization_function": "normalize_attribution(value) = max(0.0, min(1.0, abs(value) / 1.0))",
+            "aggregation_formula": "compute_attribution_strength(shap_val, lime_val, shap_weight=0.5, lime_weight=0.5) = (0.5 * normalize_attribution(shap_val) + 0.5 * normalize_attribution(lime_val)) / 1.0",
+            "clipping_and_range": "Strictly bounded to [0.0, 1.0]",
+            "code_verification": "Verified in fuzzy/normalization.py (lines 14-32) and called in fuzzy/engine.py (line 114) and fuzzy/baseline.py (line 16). Matches frozen project implementation exactly."
+        },
+        "intervention_influence": {
+            "source_definition": "Empirical leave-one-out probability shift: abs(baseline_target_probability - intervened_target_probability)",
+            "normalization_function": "normalize_intervention(delta_p) = max(0.0, min(1.0, abs(delta_p)))",
+            "units_and_range": "Probability difference, strictly in [0.0, 1.0]",
+            "code_verification": "Verified in fuzzy/normalization.py (lines 34-39), fuzzy/engine.py (line 124), and outputs/phase10_formal/results.csv (intervention_influence)."
+        },
+        "relevance": {
+            "source_definition": "Hybrid BM25 + dense retrieval score: alpha * bm25_norm + (1 - alpha) * dense_norm (alpha = 0.5)",
+            "normalization_function": "Min-max normalization of BM25 and dense scores to [0.0, 1.0] before fusion",
+            "units_and_range": "Normalized retrieval score in [0.0, 1.0]",
+            "code_verification": "Verified in retrieval/retriever.py (lines 146-163), app/pipeline.py (line 85), and fuzzy/engine.py (line 122)."
+        },
+        "contradiction_degree": {
+            "primary_condition": "Dynamically computed by conflict.detector.ConflictDetector.detect: 2.0 * min(max_support, max_refute) clamped to [0.0, 1.0] if supporting and refuting evidence co-occur, else 0.0",
+            "secondary_ablation": "Static schema default: 0.0",
+            "units_and_range": "Conflict degree in [0.0, 1.0]",
+            "code_verification": "Verified in conflict/detector.py (lines 80-83) and fuzzy/schema.py (line 20)."
+        },
+        "stability_score": {
+            "primary_condition": "Dynamically computed by stability.analyzer.StabilityAnalyzer.analyze: max(0.0, min(1.0, (rho_perm + 1.0) / 2.0)), measuring Spearman rank correlation under evidence-order permutation",
+            "secondary_ablation": "Static schema default: 1.0",
+            "units_and_range": "Rank stability score in [0.0, 1.0]",
+            "code_verification": "Verified in stability/analyzer.py (lines 71-80) and fuzzy/schema.py (line 22)."
+        },
+        "source_reliability": {
+            "value": 0.75,
+            "rationale": "Static prior for Wikipedia-sourced FEVER articles",
+            "units_and_range": "Credibility prior in [0.0, 1.0]",
+            "code_verification": "Verified in fuzzy/schema.py (line 21)."
+        }
+    },
+    "frozen_comparison_methods": {
+        "method_a_fuzzy": {
+            "name": "Fuzzy Evidence Reasoning Engine",
+            "module": "fuzzy.engine.FuzzyEvidenceEngine",
+            "primary_output": "evidence_reliability",
+            "diagnostic_output": "explanation_confidence",
+            "antecedents": [
+                "relevance",
+                "attribution",
+                "intervention",
+                "contradiction",
+                "source_reliability",
+                "stability"
+            ],
+            "membership_functions": {
+                "LOW": "trimf [0.0, 0.0, 0.4]",
+                "MEDIUM": "trimf [0.2, 0.5, 0.8]",
+                "HIGH": "trapmf [0.6, 0.8, 1.0, 1.0]"
+            },
+            "inference_engine": "Mamdani min-max composition with centroid defuzzification",
+            "rules_count": 11
+        },
+        "method_b_baseline": {
+            "name": "Non-Fuzzy Linear Weighted Baseline",
+            "module": "fuzzy.baseline.compute_baseline_score",
+            "primary_output": "adjusted_baseline_score",
+            "diagnostic_output": "baseline_score",
+            "weights": {
+                "relevance": 0.30,
+                "attribution_strength": 0.25,
+                "intervention_influence": 0.25,
+                "source_reliability": 0.10,
+                "stability": 0.10
+            },
+            "formula_base": "0.30 * relevance + 0.25 * attribution_strength + 0.25 * intervention_influence + 0.10 * source_reliability + 0.10 * stability",
+            "formula_adjusted": "baseline_score * (1.0 - contradiction_degree)"
+        }
+    },
+    "dual_evaluation_specification": {
+        "decision": "Decision D1: Option C (Dual Evaluation)",
+        "condition_1_primary": {
+            "name": "Dynamic Full Pipeline (Primary Condition)",
+            "contradiction_input": "Dynamically computed by conflict.detector.ConflictDetector.detect",
+            "stability_input": "Dynamically computed by stability.analyzer.StabilityAnalyzer.analyze",
+            "source_reliability_input": 0.75,
+            "rationale": "Evaluates the complete 6-variable pipeline incorporating semantic NLI contradiction and evidence-order permutation stability."
+        },
+        "condition_2_ablation": {
+            "name": "Static Default Baseline (Secondary Ablation)",
+            "contradiction_input": 0.0,
+            "stability_input": 1.0,
+            "source_reliability_input": 0.75,
+            "rationale": "Isolates the core relevance-attribution-intervention triad using schema defaults to quantify the marginal impact of conflict and stability signals."
+        }
+    },
+    "evaluation_population_and_candidate_pool": {
+        "dataset": "FEVER dev split (data/fever_dev.jsonl)",
+        "evaluated_claims_count": 500,
+        "retrieved_evidence_per_claim": 3,
+        "total_evidence_evaluations": 1500,
+        "retrieval_corpus_size": 808,
+        "gold_passages_in_corpus": 534,
+        "distractor_passages_in_corpus": 274,
+        "gold_evidence_instances_retrieved": 443,
+        "distractor_evidence_instances_retrieved": 1057,
+        "claims_with_at_least_one_gold_retrieved": 430,
+        "claims_with_zero_gold_retrieved": 70,
+        "claims_with_non_empty_gold_annotation": 500,
+        "intra_claim_dependence": "Claims contribute clusters of 3 retrieved evidence passages; requires claim-level cluster bootstrapping to preserve intra-claim correlation."
+    },
+    "primary_metrics": {
+        "co_primary_metrics": [
+            {
+                "id": "M1",
+                "name": "AUROC (fuzzy)",
+                "score": "evidence_reliability",
+                "target": "is_annotated_gold",
+                "definition": "Area under the Receiver Operating Characteristic curve for fuzzy primary score predicting binary gold indicator across 1,500 pooled evidence evaluations."
+            },
+            {
+                "id": "M2",
+                "name": "AUROC (baseline)",
+                "score": "adjusted_baseline_score",
+                "target": "is_annotated_gold",
+                "definition": "Area under the Receiver Operating Characteristic curve for baseline primary score predicting binary gold indicator across 1,500 pooled evidence evaluations."
+            },
+            {
+                "id": "M3",
+                "name": "Delta AUROC",
+                "formula": "AUROC(fuzzy) - AUROC(baseline)",
+                "definition": "Paired difference in discrimination performance between fuzzy and baseline primary scores."
+            },
+            {
+                "id": "M4",
+                "name": "Average Precision / PR-AUC (fuzzy)",
+                "score": "evidence_reliability",
+                "target": "is_annotated_gold",
+                "definition": "Area under the Precision-Recall curve (average precision) for fuzzy primary score predicting binary gold indicator across 1,500 pooled evaluations."
+            },
+            {
+                "id": "M5",
+                "name": "Average Precision / PR-AUC (baseline)",
+                "score": "adjusted_baseline_score",
+                "target": "is_annotated_gold",
+                "definition": "Area under the Precision-Recall curve (average precision) for baseline primary score predicting binary gold indicator across 1,500 pooled evaluations."
+            },
+            {
+                "id": "M6",
+                "name": "Delta Average Precision",
+                "formula": "AP(fuzzy) - AP(baseline)",
+                "definition": "Paired difference in Average Precision between fuzzy and baseline primary scores."
+            }
+        ]
+    },
+    "statistical_inference_procedure": {
+        "resampling_framework": "Paired claim-level cluster bootstrap with null-centering",
+        "cluster_definition": "Claim-level cluster C_j = {(e_{j,1}, y_{j,1}), (e_{j,2}, y_{j,2}), (e_{j,3}, y_{j,3})}; each selected claim contributes all 3 associated evidence records together.",
+        "claim_multiplicity_preservation": "When claim index j is drawn with multiplicity m in a bootstrap replicate, all 3 of its evidence records are replicated exactly m times in the resampled evaluation pool (total pool size is strictly 1,500).",
+        "replicate_count": 1000,
+        "random_seed": 42,
+        "random_generator": "numpy.random.Generator(np.random.PCG64(42))",
+        "observed_difference_definition": "Delta_hat = theta_hat_fuzzy - theta_hat_baseline, computed on the full observed sample of 1,500 instances across 500 claims.",
+        "resampled_difference_definition": "Delta^*_b = theta^*_b_fuzzy - theta^*_b_baseline, computed on the resampled pool of replicate b.",
+        "centering_under_null": "Delta_tilde^*_b = Delta^*_b - Delta_hat. By subtracting the observed point estimate Delta_hat, the bootstrap distribution is shifted to have mean zero, representing sampling variability under the null hypothesis H_0: Delta = 0.",
+        "exact_p_value_formula": "p_boot = (1 + sum_{b=1}^{B_valid} I(|Delta_tilde^*_b| >= |Delta_hat|)) / (B_valid + 1)",
+        "finite_replicate_correction": "Standard +1 in numerator and denominator (Davison & Hinkley 1997, MacKinnon 2009), ensuring p_boot is strictly positive and conservative.",
+        "treatment_of_ties_and_zeros": "The weak inequality |Delta_tilde^*_b| >= |Delta_hat| explicitly counts ties and exact matches. If Delta_hat = 0, |Delta_tilde^*_b| >= 0 holds for all replicates, yielding p_boot = 1.0.",
+        "confidence_intervals": {
+            "marginal_confidence_intervals": "95% two-sided empirical percentile interval [Delta^*_{(0.025)}, Delta^*_{(0.975)}] using linear interpolation, reflecting parameter uncertainty for each metric.",
+            "multiplicity_adjusted_confidence_intervals": "97.5% Bonferroni-adjusted percentile interval [Delta^*_{(0.0125)}, Delta^*_{(0.9875)}] reported alongside the 95% CIs to provide family-wise 95% simultaneous coverage across the co-primary pair."
+        },
+        "multiple_comparisons_treatment": {
+            "family_wise_error_rate": 0.05,
+            "number_of_co_primary_hypotheses": 2,
+            "hypotheses": ["H1: Delta AUROC != 0", "H2: Delta AP != 0"],
+            "correction_method": "Holm-Bonferroni step-down procedure: sort two-sided p-values p_(1) <= p_(2); test p_(1) <= alpha / 2 = 0.025; if rejected, test p_(2) <= alpha / 1 = 0.05. Adjusted p-values: p_adj,(1) = min(1.0, 2 * p_(1)), p_adj,(2) = min(1.0, max(p_adj,(1), p_(2))). Report both unadjusted p-values, Holm-adjusted p-values, and 97.5% Bonferroni-adjusted CIs."
+        },
+        "undefined_replicate_handling": {
+            "contingency": "If a resampled pool contains zero positive instances (sum(y)=0) or zero negative instances (sum(y)=N), AUROC or AP is mathematically undefined.",
+            "protocol": "Replicate is flagged as UNDEFINED_DEGENERATE_SAMPLE. It is NOT silently discarded or replaced. The failure reason and total count B_fail are recorded in the summary metadata. Effective replicates B_valid = B - B_fail is documented and used in the p-value denominator. If B_fail / B > 0.01, a methodological alert is triggered."
+        }
+    },
+    "top_1_metrics": {
+        "metric_a_all_claims": {
+            "name": "Top-1 Gold Hit Rate (All Claims)",
+            "denominator": 500,
+            "numerator_definition": "Number of claims where the top-ranked evidence piece (Rank 1 by score) is an annotated gold piece (is_annotated_gold == 1).",
+            "scope": "All 500 evaluated claims"
+        },
+        "metric_b_gold_present_claims": {
+            "name": "Top-1 Gold Hit Rate (Gold-Present Claims)",
+            "denominator": 430,
+            "numerator_definition": "Number of claims with >= 1 gold piece in Top-3 where the top-ranked evidence piece (Rank 1 by score) is an annotated gold piece (is_annotated_gold == 1).",
+            "scope": "Subset of 430 claims containing at least one gold evidence piece in retrieved Top-3"
+        },
+        "metric_c_direct_agreement": {
+            "name": "Direct Top-1 Agreement Rate (Fuzzy vs Baseline)",
+            "denominator": 500,
+            "numerator_definition": "Number of claims where fuzzy primary (evidence_reliability) and baseline primary (adjusted_baseline_score) rank the exact same evidence piece (by evidence_id) as Rank 1.",
+            "scope": "All 500 evaluated claims"
+        },
+        "tie_breaking_rule": {
+            "primary": "Score metric value (descending)",
+            "secondary": "Normalized retrieval score relevance (ev.retrieval_score, descending)",
+            "tertiary": "Original retrieval rank in retrieved set (ev.retrieval_rank, ascending: 1, 2, 3)",
+            "verification": "All three tie-breaking inputs are deterministically available from the retriever and Experiment 1 outputs."
+        }
+    },
+    "attribution_gap_subgroup_analysis": {
+        "theoretical_grounding": "Rule 2 in fuzzy engine: IF relevance is HIGH AND attribution is HIGH AND intervention is LOW THEN explanation_confidence is LOW. Tests the intended non-compensatory epistemic confidence suppression.",
+        "target_fuzzy_output": "explanation_confidence (the explicit consequent of Rule 2)",
+        "baseline_diagnostic_comparison": "baseline_score (the unadjusted linear additive baseline, which compensatorily rewards high attribution even when intervention is low)",
+        "secondary_diagnostic_evaluation": "evidence_reliability behavior within the gap subgroup is evaluated strictly as a secondary diagnostic. Rule 2 does not specify evidence_reliability in its consequent; suppression of evidence_reliability is NOT assumed a priori.",
+        "epistemic_wording_guidance": "Disagreement between attribution magnitude and intervention influence is characterized as 'attribution-intervention divergence' or 'causally unsupported post-hoc attribution'. It must NOT be equated with 'proof of causal invalidity'.",
+        "subgroups": {
+            "membership_based_standard_gap": {
+                "name": "Standard Attribution-Gap Subgroup (S_gap^std)",
+                "status": "CONFIRMATORY_PRESPECIFIED",
+                "membership_criteria": "attribution_strength >= 0.60 (membership in HIGH > 0) AND intervention_influence <= 0.40 (membership in LOW > 0)",
+                "handling": "Preserve original thresholds. Report observed sample count (N = 0 in current 1,500 evaluations). Because the subgroup is empty, state that the corresponding analysis cannot estimate an empirical effect."
+            },
+            "membership_based_extreme_gap": {
+                "name": "Extreme Attribution-Gap Subgroup (S_gap^ext)",
+                "status": "CONFIRMATORY_PRESPECIFIED",
+                "membership_criteria": "attribution_strength >= 0.80 (full membership in HIGH) AND intervention_influence <= 0.10 (high membership in LOW)",
+                "handling": "Preserve original thresholds. Report observed sample count (N = 0 in current 1,500 evaluations). Because the subgroup is empty, state that the corresponding analysis cannot estimate an empirical effect."
+            },
+            "rank_based_divergence_gap": {
+                "name": "Rank-Divergence Gap Subgroup (S_gap^rank)",
+                "status": "EXPLORATORY_POST_HOC_MOTIVATED",
+                "membership_criteria": "Evidence piece achieves Rank 1 in attribution magnitude within its claim, but achieves Rank 3 in empirical intervention influence.",
+                "handling": "Explicitly labeled EXPLORATORY because it was formulated after inspecting Experiment 1 distributions. Not presented as a confirmatory hypothesis test; no claims of formal statistical significance will be made in the current evaluation. Report descriptive sample counts, means, medians, IQR, and distribution summaries only. Confirmatory inference would require pre-specification on an independent validation set."
+            }
+        },
+        "evaluation_metrics": [
+            "Subgroup sample size N_gap and percentage of total evaluations",
+            "Descriptive mean and median explanation_confidence vs baseline_score for gap evidence",
+            "Descriptive mean and median within-claim rank of gap evidence under fuzzy primary vs baseline primary",
+            "Frequency of rank downweighting: percentage of gap instances where Rank(fuzzy) > Rank(baseline)"
+        ]
+    },
+    "testable_comparative_hypotheses": [
+        {
+            "id": "H1",
+            "name": "Co-Primary 1: Discrimination Difference (AUROC)",
+            "null_hypothesis": "Delta AUROC = AUROC(fuzzy) - AUROC(baseline) = 0",
+            "alternative_hypothesis": "Delta AUROC != 0",
+            "status": "CONFIRMATORY",
+            "evaluation": "Null-centered paired claim-level cluster bootstrap test (B=1000, seed=42); Holm-Bonferroni adjusted alpha = 0.025 or 0.05"
+        },
+        {
+            "id": "H2",
+            "name": "Co-Primary 2: Precision Difference (Average Precision / PR-AUC)",
+            "null_hypothesis": "Delta AP = AP(fuzzy) - AP(baseline) = 0",
+            "alternative_hypothesis": "Delta AP != 0",
+            "status": "CONFIRMATORY",
+            "evaluation": "Null-centered paired claim-level cluster bootstrap test (B=1000, seed=42); Holm-Bonferroni adjusted alpha = 0.025 or 0.05"
+        },
+        {
+            "id": "H3",
+            "name": "Secondary: Top-1 Gold Alignment Difference",
+            "null_hypothesis": "HitRate_A(fuzzy) = HitRate_A(baseline) and HitRate_B(fuzzy) = HitRate_B(baseline)",
+            "alternative_hypothesis": "Top-1 gold hit rate differs between fuzzy and baseline primary scoring",
+            "status": "SECONDARY_CONFIRMATORY",
+            "evaluation": "Paired claim-level bootstrap 95% CI on difference in Top-1 gold hit rates (both Metric A and Metric B)"
+        },
+        {
+            "id": "H4",
+            "name": "Secondary Diagnostic: Attribution-Gap Rule 2 Behavior",
+            "null_hypothesis": "None (Descriptive exploratory comparison only)",
+            "alternative_hypothesis": "None (No confirmatory test)",
+            "status": "EXPLORATORY_DESCRIPTIVE",
+            "evaluation": "Descriptive summary of explanation_confidence vs baseline_score on S_gap^rank without formal significance claims; confirmatory testing deferred to independent validation set"
+        }
+    ],
+    "distributional_and_diagnostic_metrics": [
+        "Score Mean, Standard Deviation, Median, IQR, Min, Max, Skewness",
+        "Boundary Saturation Frequency (Score == 0.0 or Score == 1.0)",
+        "Secondary diagnostic comparison: explanation_confidence vs unadjusted baseline_score"
+    ],
+    "threats_to_validity": [
+        "Gold evidence status is a human-annotation relevance proxy, not an objective measure of factual truth or multi-attribute reliability. Non-gold retrieved passages are not necessarily irrelevant or false.",
+        "The candidate pool is closed (808 passages) and pre-seeded with gold evidence from the 750 dev claims.",
+        "Pooled AUROC/AP evaluate discrimination across pooled instances and assume comparable calibration across claims; within-claim Top-1 hit rates serve as essential calibration-independent complements.",
+        "Centroid defuzzification naturally compresses fuzzy scores away from extremes, which affects uncalibrated distance metrics.",
+        "Intra-claim correlation among the 3 retrieved evidence pieces requires cluster-level statistical inferences."
+    ]
+}

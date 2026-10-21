@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "manifest_name": "SENSITIVITY_AUDIT_SOURCEPACK_MANIFEST",
+    "created_at": "2026-10-20T16:15:00Z",
+    "purpose": "Package source code and provenance documentation for independent NEI sensitivity audit",
+    "total_files_packaged": 9,
+    "missing_files": [],
+    "dataset_preparation_script_status": {
+      "found": true,
+      "original_path": "data/fever_loader.py",
+      "details": "Contains load_fever_split(), create_dev_subset(per_label=250, seed=42), extract_evidence_corpus(), and prepare_fever_data(). Constructs data/fever_dev.jsonl, data/evidence_corpus.json, and data/dataset_meta.json."
+    }
+  },
+  "files": [
+    {
+      "original_relative_path": "scratch/run_nei_sensitivity_audit.py",
+      "sourcepack_relative_path": "sensitivity_audit_sourcepack/scratch/run_nei_sensitivity_audit.py",
+      "file_size": 10114,
+      "sha256": "233dedc2162807f8a777bff32390e32c7de8558019eccd7ae8e6cb9a239d143f",
+      "description": "Sensitivity audit computation script"
+    },
+    {
+      "original_relative_path": "scratch/plot_sensitivity.py",
+      "sourcepack_relative_path": "sensitivity_audit_sourcepack/scratch/plot_sensitivity.py",
+      "file_size": 4409,
+      "sha256": "e235491a4943ce73559130f61cd412d7a0aebfce3eebace6327b297ea9b29e27",
+      "description": "Sensitivity ROC and PR curves plotting script"
+    },
+    {
+      "original_relative_path": "scratch/build_sensitivity_report.py",
+      "sourcepack_relative_path": "sensitivity_audit_sourcepack/scratch/build_sensitivity_report.py",
+      "file_size": 24037,
+      "sha256": "e94eda34539b60c71b808b568b5c3ce043f58344bd0c8246481996f40dc299c1",
+      "description": "Sensitivity audit report generator"
+    },
+    {
+      "original_relative_path": "DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md",
+      "sourcepack_relative_path": "sensitivity_audit_sourcepack/DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md",
+      "file_size": 17371,
+      "sha256": "c0f55d017432703a8ed7a37a385bb53705acb2cbaf349a425ac251694ac9712e",
+      "description": "Comprehensive NEI label semantics sensitivity audit report"
+    },
+    {
+      "original_relative_path": "data/dataset_meta.json",
+      "sourcepack_relative_path": "sensitivity_audit_sourcepack/data/dataset_meta.json",
+      "file_size": 290,
+      "sha256": "ec9f2e4a1cb9c992267c82048d1ef789c7a711686ef86deb2409dc99b30c7be5",
+      "description": "Dataset generation metadata showing copenlu source, seed 42, 250 per label"
+    },
+    {
+      "original_relative_path": "data/fever_loader.py",
+      "sourcepack_relative_path": "sensitivity_audit_sourcepack/data/fever_loader.py",
+      "file_size": 11163,
+      "sha256": "0904397eddce2c094c4c0764acdfe641da17a7e9b66760f1c34a94ac5a8d9c50",
+      "description": "Original script that loads copenlu/fever_gold_evidence, selects 250 records per label (seed 42), and builds evidence_corpus.json and fever_dev.jsonl"
+    },
+    {
+      "original_relative_path": "docs/DATASETS_AND_PROVENANCE.md",
+      "sourcepack_relative_path": "sensitivity_audit_sourcepack/docs/DATASETS_AND_PROVENANCE.md",
+      "file_size": 4892,
+      "sha256": "13af450e21e778772df33a6eebe91b21def2681cba9ab464037a79c80f8aa36e",
+      "description": "Formal dataset provenance, license, and lineage documentation"
+    },
+    {
+      "original_relative_path": "DATASET_OVERLAP_AUDIT.md",
+      "sourcepack_relative_path": "sensitivity_audit_sourcepack/DATASET_OVERLAP_AUDIT.md",
+      "file_size": 12765,
+      "sha256": "2f6b8825c8028bb3db4d53229fa4b8bb4157f9c7474368d80bee65ab2e1ad6aa",
+      "description": "Comprehensive dataset overlap and closed-candidate pool audit"
+    },
+    {
+      "original_relative_path": "outputs/phase12_analysis/dataset_overlap_audit.json",
+      "sourcepack_relative_path": "sensitivity_audit_sourcepack/outputs/phase12_analysis/dataset_overlap_audit.json",
+      "file_size": 5679,
+      "sha256": "771c795d30c829a8f3b6ec95df6984ce4e863c378da3d1bef49f1ac3da300d06",
+      "description": "Machine-readable dataset overlap and provenance audit"
+    }
+  ]
+}

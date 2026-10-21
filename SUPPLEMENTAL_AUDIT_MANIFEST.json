@@ -1,0 +1,113 @@
+{
+  "metadata": {
+    "manifest_name": "SUPPLEMENTAL_AUDIT_MANIFEST",
+    "created_at": "2026-10-20T14:53:00Z",
+    "purpose": "Address remaining evidence gaps for Pre-Phase-14 Independent Technical Audit",
+    "total_files_included": 16,
+    "missing_requested_files": [],
+    "final_ppt_search": {
+      "pattern": "final_ppt*.pptx",
+      "found": false,
+      "matches": [],
+      "note": "final_ppt*.pptx does not exist in project repository. Only Phase 0 proposal Fuzzy_Causal_Fact_Checking_Proposal_V2.pptx is present."
+    }
+  },
+  "files": [
+    {
+      "original_relative_path": "verification/verifier.py",
+      "supplemental_relative_path": "supplemental_audit/verification/verifier.py",
+      "file_size": 5304,
+      "sha256": "9c3ff1c114990049f611367a1b83b54fed88d6f251402fc80ff3d0222f1e5347"
+    },
+    {
+      "original_relative_path": "retrieval/schema.py",
+      "supplemental_relative_path": "supplemental_audit/retrieval/schema.py",
+      "file_size": 987,
+      "sha256": "d77c021d4fd29c5cd85c6d82f5bda06720509d1421626f6fd3eddfe99adf36b1"
+    },
+    {
+      "original_relative_path": "retrieval/bm25.py",
+      "supplemental_relative_path": "supplemental_audit/retrieval/bm25.py",
+      "file_size": 1662,
+      "sha256": "df642621bae11bd45b0e7b260c79299553c14e3fd37f43533effbd43e5666fc3"
+    },
+    {
+      "original_relative_path": "retrieval/dense.py",
+      "supplemental_relative_path": "supplemental_audit/retrieval/dense.py",
+      "file_size": 5395,
+      "sha256": "20cd0ecab39ba51a1d51fab03d459ec51c895d1c12605298c32534766abb9563"
+    },
+    {
+      "original_relative_path": "conflict/schema.py",
+      "supplemental_relative_path": "supplemental_audit/conflict/schema.py",
+      "file_size": 587,
+      "sha256": "95037dc4ccca5d857d8e23cd46890ddbf02f2268c63d3bc4353a2fdb2e010dc4"
+    },
+    {
+      "original_relative_path": "stability/schema.py",
+      "supplemental_relative_path": "supplemental_audit/stability/schema.py",
+      "file_size": 320,
+      "sha256": "2e5e75e10d0d7d49efaeca0e200b56b24390ced7e3da68f1c1c45cc8da57e143"
+    },
+    {
+      "original_relative_path": "outputs/phase11_formal/.signals_cache.json",
+      "supplemental_relative_path": "supplemental_audit/outputs/phase11_formal/.signals_cache.json",
+      "file_size": 51517,
+      "sha256": "909d111a283c589765f4a074b28280b6079f22de05c384a6bfa34c1b8417a6eb"
+    },
+    {
+      "original_relative_path": "requirements.txt",
+      "supplemental_relative_path": "supplemental_audit/requirements.txt",
+      "file_size": 426,
+      "sha256": "535659194f553b865106ff1fb14d0da9d43e55bba1c15c35509da2e6bfbbd47c"
+    },
+    {
+      "original_relative_path": "verification/schema.py",
+      "supplemental_relative_path": "supplemental_audit/verification/schema.py",
+      "file_size": 884,
+      "sha256": "0fce61e723c7f8db54c27a3b2621e792ee0dd9b08260fff690f7a7ac6f4754e1"
+    },
+    {
+      "original_relative_path": "verification/__init__.py",
+      "supplemental_relative_path": "supplemental_audit/verification/__init__.py",
+      "file_size": 227,
+      "sha256": "d5f6c840246e731602f6f8420ab20edc25dfd5e1fb6b019b8bfb3b3a9eddc462"
+    },
+    {
+      "original_relative_path": "utils/logging_setup.py",
+      "supplemental_relative_path": "supplemental_audit/utils/logging_setup.py",
+      "file_size": 1093,
+      "sha256": "7fc92c65503346701c41cd71146386b13001d292a2371c9b2f6ef0d59aa8525e"
+    },
+    {
+      "original_relative_path": "utils/reproducibility.py",
+      "supplemental_relative_path": "supplemental_audit/utils/reproducibility.py",
+      "file_size": 1258,
+      "sha256": "65058ef63e28684f87351b98f93e510c596858291c58cbd49bbe38c48f710a30"
+    },
+    {
+      "original_relative_path": "utils/__init__.py",
+      "supplemental_relative_path": "supplemental_audit/utils/__init__.py",
+      "file_size": 2,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "original_relative_path": "retrieval/__init__.py",
+      "supplemental_relative_path": "supplemental_audit/retrieval/__init__.py",
+      "file_size": 211,
+      "sha256": "2e91657174aa2c5fe81f9d22a3c2ddab5c5c500335dfd2a29bd167fc6d7211a6"
+    },
+    {
+      "original_relative_path": "conflict/__init__.py",
+      "supplemental_relative_path": "supplemental_audit/conflict/__init__.py",
+      "file_size": 204,
+      "sha256": "5b0935193a7fa240afe85d2f0b647c5d3f9f52dbdf7f46322b5fc7c3ac7adeb4"
+    },
+    {
+      "original_relative_path": "stability/__init__.py",
+      "supplemental_relative_path": "supplemental_audit/stability/__init__.py",
+      "file_size": 171,
+      "sha256": "25cd93151a01ba38badaa91973f7418775c1a0302b76cec7e9df9ca1599452d9"
+    }
+  ]
+}

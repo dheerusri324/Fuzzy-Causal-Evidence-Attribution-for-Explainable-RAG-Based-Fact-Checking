@@ -1,0 +1,398 @@
+{
+  "metadata": {
+    "manifest_created_at": "2026-10-20T13:51:27.028374",
+    "audit_phase": "Pre-Phase-14 Independent Technical Audit",
+    "total_files_audited": 63,
+    "note": "Cryptographic baseline established. No prior SHA-256 manifests existed in phases 0-13."
+  },
+  "source_files": {
+    "experiments/experiment1_formal.py": {
+      "relative_path": "experiments/experiment1_formal.py",
+      "size_bytes": 12182,
+      "sha256": "fe086a026c12993e2dc42a9e4aaf905dc5dfd77ddbba10245dfcb1bf4b38639f",
+      "last_modified_utc": "2026-09-25T07:41:15.677427Z"
+    },
+    "experiments/experiment2_formal.py": {
+      "relative_path": "experiments/experiment2_formal.py",
+      "size_bytes": 49672,
+      "sha256": "8721c2b8eb5a4e053a01bb1fe22a9a58b6d64bcc1ea81bf67cc1c4ac59252a82",
+      "last_modified_utc": "2026-10-19T14:08:14.094733Z"
+    },
+    "fuzzy/engine.py": {
+      "relative_path": "fuzzy/engine.py",
+      "size_bytes": 6018,
+      "sha256": "db4bd8023b3cebbb326cd3e5c5b05e181d714e48e9384145c40017834a53b2dd",
+      "last_modified_utc": "2026-08-26T15:18:10.103759Z"
+    },
+    "fuzzy/baseline.py": {
+      "relative_path": "fuzzy/baseline.py",
+      "size_bytes": 1384,
+      "sha256": "74c4f6820229f6f22e742a0670e90e737364e59518952ddbd1b21f9ab291604a",
+      "last_modified_utc": "2026-08-26T15:18:18.794640Z"
+    },
+    "fuzzy/normalization.py": {
+      "relative_path": "fuzzy/normalization.py",
+      "size_bytes": 1442,
+      "sha256": "343065827de1eade5a38f761dc7d4fcc96740debe214c55118cf4493c6400650",
+      "last_modified_utc": "2026-08-26T15:17:52.907170Z"
+    },
+    "fuzzy/schema.py": {
+      "relative_path": "fuzzy/schema.py",
+      "size_bytes": 932,
+      "sha256": "f2ba412fe48393a7dd4e42ee1219548bbe5a794773b9c42e778c069f80d18ce6",
+      "last_modified_utc": "2026-08-26T15:17:44.361326Z"
+    },
+    "fuzzy/__init__.py": {
+      "relative_path": "fuzzy/__init__.py",
+      "size_bytes": 586,
+      "sha256": "b4146742391da51d4541248ba9a7ea2ab03da6582c40d997a88a78db0fe6d14d",
+      "last_modified_utc": "2026-08-26T15:18:32.627339Z"
+    },
+    "intervention/intervener.py": {
+      "relative_path": "intervention/intervener.py",
+      "size_bytes": 5583,
+      "sha256": "fa1e22d5a453faf1a831878509b09e514ff788df57fbd0948a0f44d11fbf4222",
+      "last_modified_utc": "2026-08-26T14:57:33.450362Z"
+    },
+    "intervention/schema.py": {
+      "relative_path": "intervention/schema.py",
+      "size_bytes": 1218,
+      "sha256": "fadfabb1659320612337cef1281342bc51375c1fc2d347fb6e30324604f5e159",
+      "last_modified_utc": "2026-08-26T14:57:16.405530Z"
+    },
+    "intervention/__init__.py": {
+      "relative_path": "intervention/__init__.py",
+      "size_bytes": 291,
+      "sha256": "0034f39186f5b178facb94287e5c82431b6657263e70bb096516651587435833",
+      "last_modified_utc": "2026-08-26T14:57:39.729492Z"
+    },
+    "attribution/explainer.py": {
+      "relative_path": "attribution/explainer.py",
+      "size_bytes": 10398,
+      "sha256": "147d300ebd50e043afb300dd15ac37b447cc107d1f7dfaf8b5575b7053bd0afe",
+      "last_modified_utc": "2026-08-26T14:51:11.230807Z"
+    },
+    "attribution/schema.py": {
+      "relative_path": "attribution/schema.py",
+      "size_bytes": 1950,
+      "sha256": "a87f1ebf248166ba986ded61d20363d199bfa28a2921efa90d7aa2be89930a53",
+      "last_modified_utc": "2026-08-26T14:43:25.742997Z"
+    },
+    "attribution/__init__.py": {
+      "relative_path": "attribution/__init__.py",
+      "size_bytes": 273,
+      "sha256": "e79000d95eb5519bce4ee2036518134fe6fbe0b18b619038c4b4c4fc86fb9118",
+      "last_modified_utc": "2026-08-26T14:44:12.169810Z"
+    },
+    "retrieval/retriever.py": {
+      "relative_path": "retrieval/retriever.py",
+      "size_bytes": 7266,
+      "sha256": "836e2517e5e0a0fee5aa4b1ce031c3855c530b4000562cb619f4aeae06ee9551",
+      "last_modified_utc": "2026-08-21T14:13:16.426939Z"
+    },
+    "data/fever_loader.py": {
+      "relative_path": "data/fever_loader.py",
+      "size_bytes": 11163,
+      "sha256": "0904397eddce2c094c4c0764acdfe641da17a7e9b66760f1c34a94ac5a8d9c50",
+      "last_modified_utc": "2026-08-21T04:26:45.734313Z"
+    },
+    "data/schema.py": {
+      "relative_path": "data/schema.py",
+      "size_bytes": 2969,
+      "sha256": "2c0c0d61240ea47b455090296b6a097c093945ac7a7f4d5f495f59c8e3459fa1",
+      "last_modified_utc": "2026-08-21T04:26:02.185053Z"
+    },
+    "data/dataset_meta.json": {
+      "relative_path": "data/dataset_meta.json",
+      "size_bytes": 290,
+      "sha256": "ec9f2e4a1cb9c992267c82048d1ef789c7a711686ef86deb2409dc99b30c7be5",
+      "last_modified_utc": "2026-08-21T04:28:31.285898Z"
+    },
+    "conflict/detector.py": {
+      "relative_path": "conflict/detector.py",
+      "size_bytes": 3809,
+      "sha256": "07b21b4c1c1c9b0d01c53e873baf4fe4d0d1760e23dd2ec4caf52c13b2e19ed3",
+      "last_modified_utc": "2026-08-26T15:31:44.174398Z"
+    },
+    "stability/analyzer.py": {
+      "relative_path": "stability/analyzer.py",
+      "size_bytes": 3821,
+      "sha256": "156601abe26d882ebd84bd6d0ff59d6a07258db99c87bd31de0dd79ae3b29038",
+      "last_modified_utc": "2026-08-26T15:32:16.301768Z"
+    },
+    "app/pipeline.py": {
+      "relative_path": "app/pipeline.py",
+      "size_bytes": 5868,
+      "sha256": "e1878f24158c79834933254361df28347c711c11ecbd8a3d14b39871253dc141",
+      "last_modified_utc": "2026-08-27T03:26:05.997048Z"
+    },
+    "app/main.py": {
+      "relative_path": "app/main.py",
+      "size_bytes": 4334,
+      "sha256": "7530e9fa4daea8381c2e94f8625755f877068617d2467ff6fe9a7c67bf4e737a",
+      "last_modified_utc": "2026-08-27T03:24:14.405820Z"
+    },
+    "app/schema.py": {
+      "relative_path": "app/schema.py",
+      "size_bytes": 1359,
+      "sha256": "491f3f3c7aba70a3a5165134917d9cb6ec0dd14a2cfd8f820bb4512c50ed77eb",
+      "last_modified_utc": "2026-08-27T03:23:43.015987Z"
+    },
+    "config/settings.py": {
+      "relative_path": "config/settings.py",
+      "size_bytes": 3500,
+      "sha256": "07ccd8690caa95a00b52ce5668f5a9ab392932c36128e5c7caa50561e357bbfd",
+      "last_modified_utc": "2026-08-26T15:31:23.330827Z"
+    },
+    "config/default_config.yaml": {
+      "relative_path": "config/default_config.yaml",
+      "size_bytes": 555,
+      "sha256": "8a2fb8cbdfb4b91b636566d8c501d9be3144b8697817c574872246d27cb8abde",
+      "last_modified_utc": "2026-08-20T06:55:49.537373Z"
+    },
+    "scratch/generate_phase12_artifacts.py": {
+      "relative_path": "scratch/generate_phase12_artifacts.py",
+      "size_bytes": 17676,
+      "sha256": "1dc236cad24894bb7285b0b8f3ed8230d474eee1a99a8dbee408b83baec3ddc3",
+      "last_modified_utc": "2026-10-18T16:06:35.504854Z"
+    },
+    "scratch/run_phase12_analysis.py": {
+      "relative_path": "scratch/run_phase12_analysis.py",
+      "size_bytes": 10343,
+      "sha256": "fe22cf015717c05af07ad2470a16d318b218166e0807e762e803a869fbe984fa",
+      "last_modified_utc": "2026-10-18T16:05:06.211919Z"
+    },
+    "scratch/update_analysis_summary.py": {
+      "relative_path": "scratch/update_analysis_summary.py",
+      "size_bytes": 10766,
+      "sha256": "0cb55d55f92dcddc8fd4218ee126dc23493282013ea93a8786339f5a52ff0c1d",
+      "last_modified_utc": "2026-10-18T16:27:59.705916Z"
+    },
+    "scratch/update_audit_json.py": {
+      "relative_path": "scratch/update_audit_json.py",
+      "size_bytes": 5801,
+      "sha256": "1dbf31f57faa4eceb15597040ba6f6f1336f4977b7eef976b37ae9931a71f768",
+      "last_modified_utc": "2026-10-18T16:27:21.862834Z"
+    },
+    "scratch/verify_exp2.py": {
+      "relative_path": "scratch/verify_exp2.py",
+      "size_bytes": 16761,
+      "sha256": "73a67fd51554471ff5e76b98d899bcec04cae6e05100a9e27177e68f377931fc",
+      "last_modified_utc": "2026-10-19T15:51:35.198043Z"
+    }
+  },
+  "artifacts": {
+    "outputs/phase10_formal/results.csv": {
+      "relative_path": "outputs/phase10_formal/results.csv",
+      "size_bytes": 640584,
+      "sha256": "75746ff340e8a5165547208bf4123ed8147790ab3a5bddba938b2d393cff1ea6",
+      "last_modified_utc": "2026-09-25T07:56:13.885935Z"
+    },
+    "outputs/phase10_formal/config.json": {
+      "relative_path": "outputs/phase10_formal/config.json",
+      "size_bytes": 566,
+      "sha256": "d94a316bb8f9b7f5823a8f930fe8afd24a10f49c44ad8b381f5a7e34adf2ada0",
+      "last_modified_utc": "2026-09-25T07:41:38.480286Z"
+    },
+    "outputs/phase10_formal/lime_vs_influence.png": {
+      "relative_path": "outputs/phase10_formal/lime_vs_influence.png",
+      "size_bytes": 48178,
+      "sha256": "0470c4856d4b2b7929ed76324c771c0141936a1d806b998351de855dfb384190",
+      "last_modified_utc": "2026-09-25T07:56:14.393041Z"
+    },
+    "outputs/phase10_formal/shap_vs_influence.png": {
+      "relative_path": "outputs/phase10_formal/shap_vs_influence.png",
+      "size_bytes": 53402,
+      "sha256": "7ee0f4ad7a78e5bea9a1525e5c8f8719a33c587be4d9a07369ebd3428262817d",
+      "last_modified_utc": "2026-09-25T07:56:14.199993Z"
+    },
+    "outputs/phase11_formal/results.csv": {
+      "relative_path": "outputs/phase11_formal/results.csv",
+      "size_bytes": 865078,
+      "sha256": "f3d6578c572db62cbdcb9afb299502add5148b02fb4d8b8190faca5b795208aa",
+      "last_modified_utc": "2026-10-19T15:25:13.403883Z"
+    },
+    "outputs/phase11_formal/config.json": {
+      "relative_path": "outputs/phase11_formal/config.json",
+      "size_bytes": 878,
+      "sha256": "7e67552e49d9a920367388c9774007962c636419a2cd5d1c4df3f774d6112fb5",
+      "last_modified_utc": "2026-10-19T15:38:49.739351Z"
+    },
+    "outputs/phase11_formal/summary.json": {
+      "relative_path": "outputs/phase11_formal/summary.json",
+      "size_bytes": 7205,
+      "sha256": "e03321d99a9c2580810baaaca567c1f326fee745b04a0012ecbe22b31337ddf6",
+      "last_modified_utc": "2026-10-19T15:38:49.737976Z"
+    },
+    "outputs/phase11_formal/independent_validation.json": {
+      "relative_path": "outputs/phase11_formal/independent_validation.json",
+      "size_bytes": 4211,
+      "sha256": "40226a7085e1ea357a2d0336780583328cf94463efbc36e383840d9d80d546ad",
+      "last_modified_utc": "2026-10-19T15:52:49.535122Z"
+    },
+    "outputs/phase11_formal/plots/attribution_gap_behavior.png": {
+      "relative_path": "outputs/phase11_formal/plots/attribution_gap_behavior.png",
+      "size_bytes": 210890,
+      "sha256": "dd6cdfbe81ae07689bdcd536db91f6bb5389cfa52d28a67406626cb4fa08e8c2",
+      "last_modified_utc": "2026-10-19T15:38:49.720740Z"
+    },
+    "outputs/phase11_formal/plots/gold_discrimination_roc.png": {
+      "relative_path": "outputs/phase11_formal/plots/gold_discrimination_roc.png",
+      "size_bytes": 379981,
+      "sha256": "091cbac534310773ad8e61f514b6799f1d33f7fb1fac48b56a306ecfc5c22c61",
+      "last_modified_utc": "2026-10-19T15:38:47.061324Z"
+    },
+    "outputs/phase11_formal/plots/score_distribution_comparison.png": {
+      "relative_path": "outputs/phase11_formal/plots/score_distribution_comparison.png",
+      "size_bytes": 167847,
+      "sha256": "aa50ab062fb0bf3aef480efdcbea95ad8bfdd093e4911c171ffb0ce9fb700f05",
+      "last_modified_utc": "2026-10-19T15:38:48.136170Z"
+    },
+    "outputs/phase11_formal/plots/top1_hit_rate_comparison.png": {
+      "relative_path": "outputs/phase11_formal/plots/top1_hit_rate_comparison.png",
+      "size_bytes": 114506,
+      "sha256": "382b022240d287e621b0d3278a30ebd379945d8907517a9d594f27c633f840e7",
+      "last_modified_utc": "2026-10-19T15:38:49.010420Z"
+    },
+    "outputs/phase12_analysis/analysis_summary.csv": {
+      "relative_path": "outputs/phase12_analysis/analysis_summary.csv",
+      "size_bytes": 6080,
+      "sha256": "71a09a310568bbd4bcd6179d1222e0c27175c005a197ef624b867092c3d17194",
+      "last_modified_utc": "2026-10-18T16:28:28.579497Z"
+    },
+    "outputs/phase12_analysis/dataset_overlap_audit.json": {
+      "relative_path": "outputs/phase12_analysis/dataset_overlap_audit.json",
+      "size_bytes": 5679,
+      "sha256": "771c795d30c829a8f3b6ec95df6984ce4e863c378da3d1bef49f1ac3da300d06",
+      "last_modified_utc": "2026-10-18T16:27:32.413923Z"
+    },
+    "outputs/phase12_analysis/influence_by_attribution_rank.png": {
+      "relative_path": "outputs/phase12_analysis/influence_by_attribution_rank.png",
+      "size_bytes": 211449,
+      "sha256": "6a3a5a025fbee42de88d5e479a7acb0f55b46e673426515a4d153beea89f230e",
+      "last_modified_utc": "2026-10-18T16:07:06.798135Z"
+    },
+    "outputs/phase12_analysis/spearman_rho_distribution.png": {
+      "relative_path": "outputs/phase12_analysis/spearman_rho_distribution.png",
+      "size_bytes": 171116,
+      "sha256": "c445e660263f513eeefe5050b1eb8caa190df1633795aeae447e0e972a876d0d",
+      "last_modified_utc": "2026-10-18T16:07:05.603211Z"
+    },
+    "outputs/phase12_analysis/top1_agreement_breakdown.png": {
+      "relative_path": "outputs/phase12_analysis/top1_agreement_breakdown.png",
+      "size_bytes": 163759,
+      "sha256": "3464f18463f7e72cec66d3cd66a422d84dd6390469a44a3872411490c6026431",
+      "last_modified_utc": "2026-10-18T16:07:05.988930Z"
+    },
+    "outputs/phase12_analysis/verdict_flip_dynamics.png": {
+      "relative_path": "outputs/phase12_analysis/verdict_flip_dynamics.png",
+      "size_bytes": 170222,
+      "sha256": "19b8968b24267b273548fc56ad3ebc5546429fd68515e1c6b5f7c647ae801a5c",
+      "last_modified_utc": "2026-10-18T16:07:06.402618Z"
+    },
+    "EXPERIMENT_1_FORMAL_REPORT.md": {
+      "relative_path": "EXPERIMENT_1_FORMAL_REPORT.md",
+      "size_bytes": 3643,
+      "sha256": "2c0d5ed513412702731fc2e886fcb509f6bf7728b7dc3cc1bbe0dcf959397ee2",
+      "last_modified_utc": "2026-09-25T07:56:14.402073Z"
+    },
+    "EXPERIMENT_2_FORMAL_REPORT.md": {
+      "relative_path": "EXPERIMENT_2_FORMAL_REPORT.md",
+      "size_bytes": 19217,
+      "sha256": "e6a9cc7952fbd316101e4e344e8c41aec61b49171e465aacef73899e514d7577",
+      "last_modified_utc": "2026-10-19T15:58:41.233165Z"
+    },
+    "EXPERIMENT_2_POSTRUN_VALIDATION.md": {
+      "relative_path": "EXPERIMENT_2_POSTRUN_VALIDATION.md",
+      "size_bytes": 18930,
+      "sha256": "a892fc33b463ec3509a98d4e9bcf0e3e399b06811d6947ca9557aff764ea43d8",
+      "last_modified_utc": "2026-10-19T15:59:11.572814Z"
+    },
+    "PHASE_12_RESEARCH_ANALYSIS.md": {
+      "relative_path": "PHASE_12_RESEARCH_ANALYSIS.md",
+      "size_bytes": 27397,
+      "sha256": "0b2a76cb01dcf3ac09c331a34d7823151ae14aa124e3875c342b93f3d4c5ed50",
+      "last_modified_utc": "2026-10-18T16:30:25.560087Z"
+    },
+    "PHASE_13_FINAL_RESEARCH_SYNTHESIS.md": {
+      "relative_path": "PHASE_13_FINAL_RESEARCH_SYNTHESIS.md",
+      "size_bytes": 22834,
+      "sha256": "f0fe3cd2729d34581505d258f1eeb1499bcf9c18165beb2870342c9da0cdf6c6",
+      "last_modified_utc": "2026-10-19T16:22:51.222663Z"
+    },
+    "PHASE_13_FINAL_TECHNICAL_AUDIT.md": {
+      "relative_path": "PHASE_13_FINAL_TECHNICAL_AUDIT.md",
+      "size_bytes": 12193,
+      "sha256": "9e7a816da92c964616a4d9f4a2d181e41bc5d25d3fe6502558d9083e970e2671",
+      "last_modified_utc": "2026-10-19T16:24:18.192688Z"
+    },
+    "PHASE_13_DOCUMENTATION_AUDIT.md": {
+      "relative_path": "PHASE_13_DOCUMENTATION_AUDIT.md",
+      "size_bytes": 10875,
+      "sha256": "d074f5481a0004dabc8918653e5ed88d3930fcec35aa73fee2d7f55ffdb21f88",
+      "last_modified_utc": "2026-10-19T16:23:34.998866Z"
+    },
+    "DATASET_OVERLAP_AUDIT.md": {
+      "relative_path": "DATASET_OVERLAP_AUDIT.md",
+      "size_bytes": 12765,
+      "sha256": "2f6b8825c8028bb3db4d53229fa4b8bb4157f9c7474368d80bee65ab2e1ad6aa",
+      "last_modified_utc": "2026-10-18T16:28:59.422458Z"
+    },
+    "docs/EXPERIMENTS.md": {
+      "relative_path": "docs/EXPERIMENTS.md",
+      "size_bytes": 7731,
+      "sha256": "b342545bf4bcd3aec0e9abc45c341aac3f143779016a2ddd651b205dd258f67b",
+      "last_modified_utc": "2026-10-19T16:21:00.314076Z"
+    },
+    "docs/DATASETS_AND_PROVENANCE.md": {
+      "relative_path": "docs/DATASETS_AND_PROVENANCE.md",
+      "size_bytes": 4892,
+      "sha256": "13af450e21e778772df33a6eebe91b21def2681cba9ab464037a79c80f8aa36e",
+      "last_modified_utc": "2026-10-19T16:01:42.674212Z"
+    },
+    "docs/LIMITATIONS_AND_FUTURE_WORK.md": {
+      "relative_path": "docs/LIMITATIONS_AND_FUTURE_WORK.md",
+      "size_bytes": 5925,
+      "sha256": "537f1e324fd9f4af9784eb22b2322448240781f8afd4d6edbe2f9dca0005aeb7",
+      "last_modified_utc": "2026-10-19T16:21:22.797465Z"
+    },
+    "docs/ARCHITECTURE.md": {
+      "relative_path": "docs/ARCHITECTURE.md",
+      "size_bytes": 15732,
+      "sha256": "70776ca1b9946286cb569874f5fbc4ec5cae6593c03674b11734676b4e7ae9c1",
+      "last_modified_utc": "2026-10-19T16:19:34.853972Z"
+    },
+    "docs/REPRODUCIBILITY.md": {
+      "relative_path": "docs/REPRODUCIBILITY.md",
+      "size_bytes": 5262,
+      "sha256": "d78e47729140cfcf77ecb5289135788f87c3ef7d8f317d453a45d6f7cb8b369d",
+      "last_modified_utc": "2026-10-19T16:02:31.434101Z"
+    },
+    "PROJECT_SPECIFICATION.md": {
+      "relative_path": "PROJECT_SPECIFICATION.md",
+      "size_bytes": 13706,
+      "sha256": "2d498968c953e9029240f10bf1fa5eed1eaec2fa54fbb65ddea5207d36f1726c",
+      "last_modified_utc": "2026-08-20T06:50:38.522868Z"
+    },
+    "README.md": {
+      "relative_path": "README.md",
+      "size_bytes": 9696,
+      "sha256": "90d0bf67c3a84f25c2bd26fbd4034cbe4d9f23807c077689169ba9551040bb92",
+      "last_modified_utc": "2026-10-19T16:23:18.557153Z"
+    },
+    "Fuzzy_Causal_Fact_Checking_Proposal_V2.pptx": {
+      "relative_path": "Fuzzy_Causal_Fact_Checking_Proposal_V2.pptx",
+      "size_bytes": 58844,
+      "sha256": "14d3228a51886fb7fd8e3d839d1e1cba3988d8452b01445359afbaaf0024f11e",
+      "last_modified_utc": "2026-08-20T04:47:07.289499Z"
+    }
+  },
+  "missing_or_differing_files": {
+    "pipeline/pipeline.py": "File does not exist at pipeline/pipeline.py; actual implementation is located at app/pipeline.py.",
+    "final_ppt.pptx": "File does not exist. Only Phase 0 presentation Fuzzy_Causal_Fact_Checking_Proposal_V2.pptx is present.",
+    "intervention/evaluator.py": "File does not exist under this name; actual implementation is at intervention/intervener.py.",
+    "attribution/shap_explainer.py": "File does not exist under this name; unified attribution explainer is at attribution/explainer.py.",
+    "attribution/lime_explainer.py": "File does not exist under this name; unified attribution explainer is at attribution/explainer.py.",
+    "config/config.py": "File does not exist under this name; actual configuration files are config/settings.py and config/default_config.yaml."
+  }
+}

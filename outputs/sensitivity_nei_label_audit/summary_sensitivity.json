@@ -1,0 +1,225 @@
+{
+  "audit_title": "NEI Evidence Label Sensitivity Audit",
+  "timestamp": "2026-10-20T15:35:00Z",
+  "evaluation_scope": "Closed candidate pool of 808 FEVER passages",
+  "protocol_a_all_500_claims_nei_as_zero": {
+    "description": "All 500 claims evaluated; 147 NEI evidence rows reclassified as distractor (is_gold=0)",
+    "sample_sizes": {
+      "total_claims": 500,
+      "total_evidence_rows": 1500,
+      "gold_instances": 296,
+      "distractor_instances": 1204,
+      "claims_with_gold_in_top3": 283,
+      "claims_with_zero_gold_in_top3": 217
+    },
+    "dynamic_pipeline_results": {
+      "H1_AUROC": {
+        "point_estimate_fuzzy": 0.7386330474993266,
+        "point_estimate_base": 0.6488170063751459,
+        "delta_hat": 0.08981604112418062,
+        "ci_95_marginal": [
+          0.050261686872528945,
+          0.1281287205349674
+        ],
+        "ci_975_bonferroni": [
+          0.04319318183300681,
+          0.1359493225051682
+        ],
+        "p_value_raw": 0.000999000999000999,
+        "p_value_holm_adjusted": 0.001998001998001998,
+        "step_alpha": 0.025,
+        "statistically_significant": true,
+        "replicates_valid": 1000
+      },
+      "H2_AP": {
+        "point_estimate_fuzzy": 0.35369549867299666,
+        "point_estimate_base": 0.42166126657111463,
+        "delta_hat": -0.06796576789811798,
+        "ci_95_marginal": [
+          -0.10890623069887549,
+          -0.03191275127803627
+        ],
+        "ci_975_bonferroni": [
+          -0.11683160067126806,
+          -0.0253051920404518
+        ],
+        "p_value_raw": 0.000999000999000999,
+        "p_value_holm_adjusted": 0.001998001998001998,
+        "step_alpha": 0.05,
+        "statistically_significant": true,
+        "replicates_valid": 1000
+      }
+    },
+    "static_ablation_results": {
+      "H1_AUROC": {
+        "point_estimate_fuzzy": 0.7888050529765647,
+        "point_estimate_base": 0.8661373686809734,
+        "delta_hat": -0.07733231570440868,
+        "ci_95_marginal": [
+          -0.0940620916404165,
+          -0.061034951059170846
+        ],
+        "ci_975_bonferroni": [
+          -0.09666676746832009,
+          -0.058977674727202486
+        ],
+        "p_value_raw": 0.000999000999000999,
+        "p_value_holm_adjusted": 0.001998001998001998,
+        "step_alpha": 0.025,
+        "statistically_significant": true,
+        "replicates_valid": 1000
+      },
+      "H2_AP": {
+        "point_estimate_fuzzy": 0.4757104296332511,
+        "point_estimate_base": 0.6359536268884001,
+        "delta_hat": -0.16024319725514896,
+        "ci_95_marginal": [
+          -0.18944228816429634,
+          -0.13266836639926233
+        ],
+        "ci_975_bonferroni": [
+          -0.19458289375832688,
+          -0.1276873474575746
+        ],
+        "p_value_raw": 0.000999000999000999,
+        "p_value_holm_adjusted": 0.001998001998001998,
+        "step_alpha": 0.05,
+        "statistically_significant": true,
+        "replicates_valid": 1000
+      }
+    },
+    "top1_alignment_metrics": {
+      "metric_a_all_claims": {
+        "denominator": 500,
+        "fuzzy_hits": 248,
+        "fuzzy_rate": 0.496,
+        "baseline_hits": 236,
+        "baseline_rate": 0.472,
+        "difference": 0.02400000000000002
+      },
+      "metric_b_gold_present_claims": {
+        "denominator": 283,
+        "fuzzy_hits": 248,
+        "fuzzy_rate": 0.8763250883392226,
+        "baseline_hits": 236,
+        "baseline_rate": 0.833922261484099,
+        "difference": 0.04240282685512364
+      },
+      "metric_c_direct_agreement": {
+        "denominator": 500,
+        "agreed_claims": 437,
+        "agreement_rate": 0.874
+      }
+    }
+  },
+  "protocol_b_supports_refutes_only_334_claims": {
+    "description": "Excludes all 166 NEI claims; evaluates only 168 SUPPORTS and 166 REFUTES claims with verifiable gold evidence",
+    "sample_sizes": {
+      "total_claims": 334,
+      "total_evidence_rows": 1002,
+      "gold_instances": 296,
+      "distractor_instances": 706,
+      "claims_with_gold_in_top3": 283,
+      "claims_with_zero_gold_in_top3": 51
+    },
+    "dynamic_pipeline_results": {
+      "H1_AUROC": {
+        "point_estimate_fuzzy": 0.777661071127785,
+        "point_estimate_base": 0.694929082765485,
+        "delta_hat": 0.0827319883623,
+        "ci_95_marginal": [
+          0.04554035521412535,
+          0.12133712860871562
+        ],
+        "ci_975_bonferroni": [
+          0.037275705792605134,
+          0.12935178323958785
+        ],
+        "p_value_raw": 0.000999000999000999,
+        "p_value_holm_adjusted": 0.001998001998001998,
+        "step_alpha": 0.025,
+        "statistically_significant": true,
+        "replicates_valid": 1000
+      },
+      "H2_AP": {
+        "point_estimate_fuzzy": 0.5091049855610885,
+        "point_estimate_base": 0.6189127849738397,
+        "delta_hat": -0.1098077994127512,
+        "ci_95_marginal": [
+          -0.15176604343452077,
+          -0.06322959394391969
+        ],
+        "ci_975_bonferroni": [
+          -0.15625705418134894,
+          -0.057333603630317344
+        ],
+        "p_value_raw": 0.000999000999000999,
+        "p_value_holm_adjusted": 0.001998001998001998,
+        "step_alpha": 0.05,
+        "statistically_significant": true,
+        "replicates_valid": 1000
+      }
+    },
+    "static_ablation_results": {
+      "H1_AUROC": {
+        "point_estimate_fuzzy": 0.821029687619631,
+        "point_estimate_base": 0.9106667751320726,
+        "delta_hat": -0.0896370875124416,
+        "ci_95_marginal": [
+          -0.10572084539281157,
+          -0.07250387239136052
+        ],
+        "ci_975_bonferroni": [
+          -0.11061326754622668,
+          -0.06997588440507445
+        ],
+        "p_value_raw": 0.000999000999000999,
+        "p_value_holm_adjusted": 0.001998001998001998,
+        "step_alpha": 0.025,
+        "statistically_significant": true,
+        "replicates_valid": 1000
+      },
+      "H2_AP": {
+        "point_estimate_fuzzy": 0.6038430759060429,
+        "point_estimate_base": 0.8086046947370678,
+        "delta_hat": -0.20476161883102484,
+        "ci_95_marginal": [
+          -0.23602988856488344,
+          -0.17589452663065547
+        ],
+        "ci_975_bonferroni": [
+          -0.23891506536204143,
+          -0.17216410872220686
+        ],
+        "p_value_raw": 0.000999000999000999,
+        "p_value_holm_adjusted": 0.001998001998001998,
+        "step_alpha": 0.05,
+        "statistically_significant": true,
+        "replicates_valid": 1000
+      }
+    },
+    "top1_alignment_metrics": {
+      "metric_a_all_claims": {
+        "denominator": 334,
+        "fuzzy_hits": 248,
+        "fuzzy_rate": 0.7425149700598802,
+        "baseline_hits": 236,
+        "baseline_rate": 0.7065868263473054,
+        "difference": 0.0359281437125748
+      },
+      "metric_b_gold_present_claims": {
+        "denominator": 283,
+        "fuzzy_hits": 248,
+        "fuzzy_rate": 0.8763250883392226,
+        "baseline_hits": 236,
+        "baseline_rate": 0.833922261484099,
+        "difference": 0.04240282685512364
+      },
+      "metric_c_direct_agreement": {
+        "denominator": 334,
+        "agreed_claims": 298,
+        "agreement_rate": 0.8922155688622755
+      }
+    }
+  }
+}

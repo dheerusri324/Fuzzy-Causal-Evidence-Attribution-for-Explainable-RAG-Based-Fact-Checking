@@ -1,0 +1,117 @@
+{
+    "task1_primary_metrics": {
+        "status": "PASS",
+        "independent": {
+            "auroc_fuzzy": 0.7629732771526382,
+            "auroc_baseline": 0.7265013849409824,
+            "delta_auroc": 0.03647189221165581,
+            "ap_fuzzy": 0.48837153442246944,
+            "ap_baseline": 0.6279924341056068,
+            "delta_ap": -0.13962089968313735
+        },
+        "reported": {
+            "auroc_fuzzy": 0.7629754127593961,
+            "auroc_baseline": 0.7265013849409824,
+            "delta_auroc": 0.03647402781841369,
+            "ap_fuzzy": 0.48837377837582535,
+            "ap_baseline": 0.6279924341056068,
+            "delta_ap": -0.13961865572978144
+        },
+        "absolute_difference": {
+            "auroc_fuzzy": 2.1356067578803817e-06,
+            "auroc_baseline": 0.0,
+            "delta_auroc": 2.1356067578803817e-06,
+            "ap_fuzzy": 2.2439533559071023e-06,
+            "ap_baseline": 0.0,
+            "delta_ap": 2.2439533559071023e-06
+        },
+        "notes": "Fuzzy point estimates differ by ~2.14e-6 due to CSV text serialization from in-memory 64-bit float; baseline matches exactly (0.00e+00). Differences are well below 1e-4 tolerance."
+    },
+    "task2_bootstrap_inference": {
+        "status": "PASS",
+        "independent": {
+            "auroc_p_raw": 0.023976023976023976,
+            "auroc_p_holm": 0.023976023976023976,
+            "auroc_ci95": [
+                0.005321750868478326,
+                0.06861906051838011
+            ],
+            "auroc_ci975": [
+                6.112734970285783e-05,
+                0.0709508455774912
+            ],
+            "ap_p_raw": 0.000999000999000999,
+            "ap_p_holm": 0.001998001998001998,
+            "ap_ci95": [
+                -0.1776999765666007,
+                -0.10245347524795992
+            ],
+            "ap_ci975": [
+                -0.1856455271708279,
+                -0.09880336788117944
+            ],
+            "degenerate_replicates": 0
+        },
+        "reported": {
+            "auroc_p_raw": 0.023976023976023976,
+            "auroc_p_holm": 0.023976023976023976,
+            "auroc_ci95": [
+                0.005331234402253787,
+                0.068620088368371
+            ],
+            "auroc_ci975": [
+                6.326988366409352e-05,
+                0.0709567947412293
+            ],
+            "ap_p_raw": 0.000999000999000999,
+            "ap_p_holm": 0.001998001998001998,
+            "ap_ci95": [
+                -0.17769424128697778,
+                -0.10245342123420789
+            ],
+            "ap_ci975": [
+                -0.18564293683094962,
+                -0.09880336788117944
+            ],
+            "degenerate_replicates": 0
+        }
+    },
+    "task3_secondary_metrics": {
+        "status": "PASS",
+        "top1_metric_a_fuzzy": 365,
+        "top1_metric_a_baseline": 345,
+        "top1_metric_b_fuzzy": 365,
+        "top1_metric_b_baseline": 345,
+        "top1_metric_c_agreement": 437,
+        "static_auroc_fuzzy": 0.7946005454339659,
+        "static_auroc_baseline": 0.8889452451783337,
+        "static_ap_fuzzy": 0.5549551522588312,
+        "static_ap_baseline": 0.7600183721893569,
+        "baseline_saturation_0_count": 312,
+        "standard_gap_count": 0,
+        "extreme_gap_count": 0,
+        "rank_gap_count": 87
+    },
+    "task4_condition_isolation": {
+        "status": "PASS",
+        "claim_ids_identical": true,
+        "evidence_ids_identical": true,
+        "shap_raw_identical": true,
+        "lime_raw_identical": true,
+        "intervention_identical": true,
+        "source_reliability_constant": true,
+        "static_ablation_inputs_verified": true
+    },
+    "task5_scientific_interpretation": {
+        "status": "PASS",
+        "checks": {
+            "auroc_vs_ap_distinction": true,
+            "proxy_limitation_stated": true,
+            "unannotated_not_false": true,
+            "closed_pool_documented": true,
+            "exploratory_rank_gap_labeled": true,
+            "no_universal_superiority": true,
+            "confirmatory_deferred": true
+        }
+    }
+}

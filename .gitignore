@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Python Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Operating System Temporary Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor Temporary Files
+.idea/
+.vscode/
+.agents/
+.claude/
+
+# Temporary Scratch Files
+scratch/*.tmp
+
+# Copyrighted Reference Paper (Preserved locally; full text redistributed only via publisher citation)
+Explaining_the_Role_of_Evidence_in_Data-Driven_Fact-Checking.pdf
+

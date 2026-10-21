@@ -1,0 +1,58 @@
+Category,Metric,Value,Unit,Notes
+Overview,Evaluated Claims,500,claims,Claims evaluated from FEVER dev split (first 500 of 750 records)
+Overview,Evidence Corpus Size,808,passages,Closed candidate pool of unique evidence passages extracted from the 750 dev claims (copenlu/fever_gold_evidence)
+Overview,Corpus Construction Nature,Gold-Conditioned Closed Pool,text,"Retrieval searched 808-passage candidate pool (534 gold + 274 distractors), not full 5M Wikipedia dump"
+Overview,Top-k Evidence per Claim,3,evidence/claim,Fixed retrieval budget for claim-evidence verification
+Overview,Total Evidence Evaluations,1500,removals,Total leave-one-out (LOO) evidence removals (500 claims x 3 evidence)
+Corpus Availability,Gold Passages in Corpus,534,passages,534 / 534 annotated gold passages present in candidate corpus (100.0%)
+Retrieval Coverage,Claims with Non-Empty Gold Annotations,500,claims,All 500 evaluated claims possess non-empty gold annotations
+Retrieval Coverage,All Annotated Gold IDs Retrieved in Top-3,409,claims,81.80% of claims (409 / 500 with non-empty gold annotations)
+Retrieval Coverage,Partial Gold-Evidence Coverage in Top-3,21,claims,"4.20% of claims (at least 1, but not all, annotated gold IDs retrieved)"
+Retrieval Coverage,Zero Gold-Evidence Coverage in Top-3,70,claims,"14.00% of claims (annotated gold exists, but zero matches in Top-3)"
+Retrieval Coverage,At Least One Gold ID Retrieved in Top-3,430,claims,86.00% of claims (409 full + 21 partial = 430 / 500)
+Retrieval Coverage,Retrieved Gold Evidence Instances,443,instances,29.53% of all 1500 retrieved evidence pieces (443 / 1500)
+Retrieval Coverage,Retrieved Distractor Instances,1057,instances,70.47% of all 1500 retrieved evidence pieces (1057 / 1500)
+Baseline Distribution,SUPPORTS Claims,154,claims,30.80% of evaluated claims (154 / 500)
+Baseline Distribution,REFUTES Claims,267,claims,53.40% of evaluated claims (267 / 500)
+Baseline Distribution,NOT_ENOUGH_INFO Claims,79,claims,15.80% of evaluated claims (79 / 500)
+Verdict Flips (Evaluations),Total Verdict Flips,322,flips,Total removals that changed baseline verdict
+Verdict Flips (Evaluations),Total Non-Flips,1178,non-flips,Total removals that preserved baseline verdict
+Verdict Flips (Evaluations),Overall Verdict-Flip Rate,21.47,%,322 flips / 1500 total removals
+Verdict Flips (Evaluations),SUPPORTS Removal Flip Rate,37.23,%,172 flips / 462 removal evaluations in SUPPORTS claims (denominator = removals)
+Verdict Flips (Evaluations),REFUTES Removal Flip Rate,10.11,%,81 flips / 801 removal evaluations in REFUTES claims (denominator = removals)
+Verdict Flips (Evaluations),NOT_ENOUGH_INFO Removal Flip Rate,29.11,%,69 flips / 237 removal evaluations in NEI claims (denominator = removals)
+Verdict Flips (Claim-Level),Claims with >= 1 Flip,253,claims,50.60% of all claims (253 / 500)
+Verdict Flips (Claim-Level),Claims with 0 Flips,247,claims,49.40% of all claims (247 / 500)
+Verdict Flips (Claim-Level),SUPPORTS Claims with >= 1 Flip,135,claims,87.66% of SUPPORTS claims (135 / 154)
+Verdict Flips (Claim-Level),REFUTES Claims with >= 1 Flip,70,claims,26.22% of REFUTES claims (70 / 267)
+Verdict Flips (Claim-Level),NOT_ENOUGH_INFO Claims with >= 1 Flip,48,claims,60.76% of NEI claims (48 / 79)
+Attribution Agreement,Direct SHAP-LIME Top-1 Agreement,412,claims,82.40% of claims (412 / 500); abs(SHAP) and abs(LIME) rank identical evidence piece #1
+Attribution Agreement,Direct SHAP-LIME Top-1 Disagreement,88,claims,17.60% of claims (88 / 500); abs(SHAP) and abs(LIME) select different evidence pieces for rank #1
+Top-1 Agreement (Intervention),SHAP Top-1 Agreement Count,361,claims,Highest abs(SHAP) matches highest intervention influence (361 / 500)
+Top-1 Agreement (Intervention),SHAP Top-1 Agreement Rate,72.20,%,361 / 500 claims
+Top-1 Agreement (Intervention),LIME Top-1 Agreement Count,420,claims,Highest abs(LIME) matches highest intervention influence (420 / 500)
+Top-1 Agreement (Intervention),LIME Top-1 Agreement Rate,84.00,%,420 / 500 claims
+Top-1 Agreement (Intervention),Consensus (Both Agree with Intervention),354,claims,70.80% of claims (354 / 500)
+Top-1 Agreement (Intervention),LIME Only Agrees with Intervention,66,claims,13.20% of claims (66 / 500)
+Top-1 Agreement (Intervention),SHAP Only Agrees with Intervention,7,claims,1.40% of claims (7 / 500)
+Top-1 Agreement (Intervention),Neither Agrees with Intervention,73,claims,"14.60% of claims (73 / 500; 58 agree with each other, 15 disagree with each other)"
+Spearman Rho (SHAP),Valid Correlations Count,500,claims,Zero undefined correlations across 500 claims
+Spearman Rho (SHAP),Mean Rho,0.4517,correlation,Coarse measure of within-claim rank agreement
+Spearman Rho (SHAP),Median Rho,0.5000,correlation,50th percentile across claims
+Spearman Rho (SHAP),"Std Dev (Sample, ddof=1)",0.6397,correlation,Sample standard deviation
+Spearman Rho (SHAP),Min Rho,-1.0000,correlation,Minimum observed
+Spearman Rho (SHAP),Q1 (25th Percentile),0.5000,correlation,First quartile
+Spearman Rho (SHAP),Q3 (75th Percentile),1.0000,correlation,Third quartile
+Spearman Rho (SHAP),Max Rho,1.0000,correlation,Maximum observed
+Spearman Rho (SHAP),IQR,0.5000,correlation,Q3 - Q1
+Spearman Rho (SHAP),Positive Correlations (rho > 0),78.80,%,394 / 500 claims
+Spearman Rho (LIME),Valid Correlations Count,500,claims,Zero undefined correlations across 500 claims
+Spearman Rho (LIME),Mean Rho,0.5877,correlation,Coarse measure of within-claim rank agreement
+Spearman Rho (LIME),Median Rho,0.5000,correlation,50th percentile across claims
+Spearman Rho (LIME),"Std Dev (Sample, ddof=1)",0.5565,correlation,Sample standard deviation
+Spearman Rho (LIME),Min Rho,-1.0000,correlation,Minimum observed
+Spearman Rho (LIME),Q1 (25th Percentile),0.5000,correlation,First quartile
+Spearman Rho (LIME),Q3 (75th Percentile),1.0000,correlation,Third quartile
+Spearman Rho (LIME),Max Rho,1.0000,correlation,Maximum observed
+Spearman Rho (LIME),IQR,0.5000,correlation,Q3 - Q1
+Spearman Rho (LIME),Positive Correlations (rho > 0),87.00,%,435 / 500 claims

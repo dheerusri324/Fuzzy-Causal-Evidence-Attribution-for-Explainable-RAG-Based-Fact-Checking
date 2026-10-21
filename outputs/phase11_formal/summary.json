@@ -1,0 +1,195 @@
+{
+    "experiment_name": "Experiment 2 \u2014 Comparative Evaluation of Fuzzy Evidence Reasoning vs. Linear Baseline",
+    "phase": 11,
+    "run_timestamp": "2026-10-19T21:08:49.735828",
+    "integrity_validation": {
+        "status": "PASSED_100_PERCENT",
+        "claims_validated": 500,
+        "evidence_records_validated": 1500,
+        "gold_evidence_matches": 443,
+        "claims_with_gold_in_top3": 430,
+        "claims_with_zero_gold_in_top3": 70,
+        "all_checks_passed": true
+    },
+    "sample_sizes": {
+        "claims_evaluated": 500,
+        "evidence_evaluations_total": 1500,
+        "gold_instances": 443,
+        "distractor_instances": 1057,
+        "claims_with_gold_in_top3": 430,
+        "claims_with_zero_gold_in_top3": 70
+    },
+    "co_primary_results_dynamic_pipeline": {
+        "H1_AUROC": {
+            "point_estimate_fuzzy": 0.7629754127593961,
+            "point_estimate_base": 0.7265013849409824,
+            "delta_hat": 0.03647402781841369,
+            "ci_95_marginal": [
+                0.005331234402253787,
+                0.068620088368371
+            ],
+            "ci_975_bonferroni": [
+                6.326988366409352e-05,
+                0.0709567947412293
+            ],
+            "p_value_raw": 0.023976023976023976,
+            "p_value_holm_adjusted": 0.023976023976023976,
+            "step_alpha": 0.05,
+            "statistically_significant": true,
+            "replicates_valid": 1000,
+            "replicates_degenerate": 0
+        },
+        "H2_Average_Precision": {
+            "point_estimate_fuzzy": 0.48837377837582535,
+            "point_estimate_base": 0.6279924341056068,
+            "delta_hat": -0.13961865572978144,
+            "ci_95_marginal": [
+                -0.17769424128697778,
+                -0.10245342123420789
+            ],
+            "ci_975_bonferroni": [
+                -0.18564293683094962,
+                -0.09880336788117944
+            ],
+            "p_value_raw": 0.000999000999000999,
+            "p_value_holm_adjusted": 0.001998001998001998,
+            "step_alpha": 0.025,
+            "statistically_significant": true,
+            "replicates_valid": 1000,
+            "replicates_degenerate": 0
+        }
+    },
+    "secondary_ablation_static_defaults": {
+        "AUROC": {
+            "point_estimate_fuzzy": 0.7946026810407238,
+            "point_estimate_base": 0.8889452451783337,
+            "delta_hat": -0.09434256413760989,
+            "ci_95_marginal": [
+                -0.10883997533819154,
+                -0.07888795450546543
+            ],
+            "p_value_raw": 0.000999000999000999
+        },
+        "Average_Precision": {
+            "point_estimate_fuzzy": 0.5549573962121871,
+            "point_estimate_base": 0.7600183721893569,
+            "delta_hat": -0.20506097597716977,
+            "ci_95_marginal": [
+                -0.23013491435137953,
+                -0.17655052190864912
+            ],
+            "p_value_raw": 0.000999000999000999
+        }
+    },
+    "top1_alignment_metrics": {
+        "dynamic_pipeline": {
+            "metric_a_all_claims": {
+                "denominator": 500,
+                "fuzzy_hits": 365,
+                "fuzzy_rate": 0.73,
+                "baseline_hits": 345,
+                "baseline_rate": 0.69,
+                "difference": 0.040000000000000036
+            },
+            "metric_b_gold_present_claims": {
+                "denominator": 430,
+                "fuzzy_hits": 365,
+                "fuzzy_rate": 0.8488372093023255,
+                "baseline_hits": 345,
+                "baseline_rate": 0.8023255813953488,
+                "difference": 0.046511627906976716
+            },
+            "metric_c_direct_agreement": {
+                "denominator": 500,
+                "agreed_claims": 437,
+                "agreement_rate": 0.874
+            }
+        },
+        "static_ablation": {
+            "metric_a_all_claims": {
+                "denominator": 500,
+                "fuzzy_hits": 366,
+                "fuzzy_rate": 0.732,
+                "baseline_hits": 344,
+                "baseline_rate": 0.688,
+                "difference": 0.04400000000000004
+            },
+            "metric_b_gold_present_claims": {
+                "denominator": 430,
+                "fuzzy_hits": 366,
+                "fuzzy_rate": 0.8511627906976744,
+                "baseline_hits": 344,
+                "baseline_rate": 0.8,
+                "difference": 0.051162790697674376
+            },
+            "metric_c_direct_agreement": {
+                "denominator": 500,
+                "agreed_claims": 431,
+                "agreement_rate": 0.862
+            }
+        }
+    },
+    "score_distribution_diagnostics": {
+        "fuzzy_evidence_reliability": {
+            "mean": 0.3758204141870621,
+            "std": 0.17370039341053406,
+            "median": 0.5,
+            "iqr": 0.3359218950982138,
+            "min": 0.13414662758699353,
+            "max": 0.8082705366152064,
+            "saturation_count_0": 0,
+            "saturation_count_1": 0,
+            "saturation_rate": 0.0
+        },
+        "baseline_adjusted_score": {
+            "mean": 0.33122692173346824,
+            "std": 0.22498167170663153,
+            "median": 0.32987160216646993,
+            "iqr": 0.25016668189053515,
+            "min": 0.0,
+            "max": 0.8828244826205877,
+            "saturation_count_0": 312,
+            "saturation_count_1": 0,
+            "saturation_rate": 0.208
+        },
+        "fuzzy_explanation_confidence": {
+            "mean": 0.5196570156536963,
+            "std": 0.07517454548824197,
+            "median": 0.5,
+            "iqr": 0.0,
+            "min": 0.5,
+            "max": 0.8082705366152064,
+            "saturation_count_0": 0,
+            "saturation_count_1": 0,
+            "saturation_rate": 0.0
+        },
+        "baseline_raw_score": {
+            "mean": 0.42513217657205254,
+            "std": 0.19059254891671648,
+            "median": 0.36681023536606655,
+            "iqr": 0.24147348525528556,
+            "min": 0.11002946327653929,
+            "max": 0.8829515503371407,
+            "saturation_count_0": 0,
+            "saturation_count_1": 0,
+            "saturation_rate": 0.0
+        }
+    },
+    "attribution_gap_subgroups": {
+        "membership_standard_gap_count": 0,
+        "membership_extreme_gap_count": 0,
+        "rank_divergence_gap_exploratory": {
+            "status": "EXPLORATORY_DESCRIPTIVE_ONLY",
+            "sample_size": 87,
+            "sample_percentage": 0.058,
+            "explanation_confidence_mean": 0.5,
+            "explanation_confidence_median": 0.5,
+            "baseline_raw_score_mean": 0.34667196295526576,
+            "baseline_raw_score_median": 0.3351702518582386,
+            "fuzzy_mean_within_claim_rank": 2.2298850574712645,
+            "baseline_mean_within_claim_rank": 2.2988505747126435,
+            "fuzzy_rank_downweighted_count": 5,
+            "fuzzy_rank_downweighted_rate": 0.05747126436781609
+        }
+    }
+}

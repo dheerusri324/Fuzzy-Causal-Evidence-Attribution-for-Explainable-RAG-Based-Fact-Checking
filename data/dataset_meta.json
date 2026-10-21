@@ -1,0 +1,14 @@
+{
+  "dataset": "fever",
+  "source": "copenlu/fever_gold_evidence",
+  "full_records": 5000,
+  "dev_records": 750,
+  "evidence_corpus_size": 808,
+  "label_distribution": {
+    "NOT_ENOUGH_INFO": 250,
+    "REFUTES": 250,
+    "SUPPORTS": 250
+  },
+  "per_label": 250,
+  "seed": 42
+}

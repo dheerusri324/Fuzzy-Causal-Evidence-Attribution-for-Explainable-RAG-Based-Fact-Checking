@@ -1,0 +1,28 @@
+# Default project configuration
+# Override by passing a custom YAML path to Config.from_yaml()
+
+# --- Dataset ---
+dataset_name: fever
+dataset_split: train
+max_claims: 500
+
+# --- Retrieval ---
+retrieval_mode: hybrid   # bm25 | dense | hybrid
+top_k: 5
+embedding_model: all-MiniLM-L6-v2
+
+# --- Verification ---
+verifier_model: cross-encoder/nli-deberta-v3-base
+
+# --- Attribution ---
+shap_num_samples: 100
+lime_num_samples: 100
+
+# --- Device ---
+device: cpu   # cpu | cuda | mps
+
+# --- Reproducibility ---
+random_seed: 42
+
+# --- Development ---
+debug: false
