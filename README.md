@@ -23,11 +23,11 @@ A reliability-aware evidence attribution and explanation framework for automated
 5. [Repository Structure & Phase Identifiers](#5-repository-structure--phase-identifiers)
 6. [Dataset Sources, Sampling & Provenance](#6-dataset-sources-sampling--provenance)
 7. [Summary of Formal Experimental Findings](#7-summary-of-formal-experimental-findings)
-   - [Experiment 1: Attribution vs. Counterfactual Intervention](#experiment-1-attribution-vs-counterfactual-intervention-n--1500)
-   - [Experiment 2: Fuzzy Reasoning vs. Linear Baseline](#experiment-2-fuzzy-reasoning-vs-linear-baseline-n--1500)
-   - [NEI Label Semantics Sensitivity Audit](#nei-label-semantics-sensitivity-audit-n--1002)
+   - [Experiment 1: Attribution vs. Counterfactual Intervention](#experiment-1-attribution-vs-counterfactual-intervention-500-claims-up-to-1500-evidence-level-attributioninfluence-values)
+   - [Experiment 2: Fuzzy Reasoning vs. Linear Baseline](#experiment-2-fuzzy-reasoning-vs-linear-baseline-500-claims-1500-claim-evidence-rows)
+   - [NEI Evidence Label Sensitivity Audit](#nei-evidence-label-sensitivity-audit-protocols-a--b)
 8. [Installation & Environment Setup](#8-installation--environment-setup)
-9. [Running the Application, Tests & Verifications](#9-running-the-application-tests--verifications)
+9. [Running the Application, Tests, and Verification Scripts](#9-running-the-application-tests-and-verification-scripts)
 10. [Audit Trail & Technical Errata Index](#10-audit-trail--technical-errata-index)
 11. [Known Methodological Limitations & Boundaries](#11-known-methodological-limitations--boundaries)
 12. [Citation & Licensing](#12-citation--licensing)
@@ -190,24 +190,31 @@ The evaluation corpus is constructed via [`data/fever_loader.py`](data/fever_loa
 
 ## 7. Summary of Formal Experimental Findings
 
-### Experiment 1: Attribution vs. Counterfactual Intervention ($N = 1,500$)
-Evaluates alignment between post-hoc attribution (SHAP/LIME) and leave-one-out empirical influence across 500 claims ($k=3$ passages each):
-- **Top-1 Agreement**: LIME achieved **84.00%** ($420 / 500$) and SHAP achieved **72.20%** ($361 / 500$) agreement with the most influential passage under leave-one-out removal.
-- **Rank Correlation ($\rho$)**: LIME mean Spearman $\rho = \mathbf{0.5877}$ (median $\mathbf{0.5000}$); SHAP mean Spearman $\rho = \mathbf{0.4517}$ (median $\mathbf{0.5000}$).
-- **Attribution Blind Spots**: In **21.47%** of evidence removals ($322 / 1,500$), the discrete verifier verdict flipped. In **16.15% (LIME)** and **16.77% (SHAP)** of these flips, the removed passage was ranked 2nd or 3rd by attribution, demonstrating that feature attribution alone fails to catch critical decision vulnerabilities.
+### Experiment 1: Attribution vs. Counterfactual Intervention (500 claims; up to 1,500 evidence-level attribution/influence values)
+Evaluates alignment between post-hoc feature attribution (SHAP/LIME) and leave-one-out empirical influence across 500 evaluated claims (with up to $k=3$ retrieved passages per claim, corresponding to up to 1,500 evidence-level attribution and influence values when all three passages are evaluated):
+- **Top-1 Agreement**: Evaluated per claim; LIME achieved **84.00%** ($420 / 500$) and SHAP achieved **72.20%** ($361 / 500$) agreement with the most influential passage under leave-one-out removal.
+- **Rank Correlation ($\rho$)**: Evaluated across claim-evidence rankings; LIME mean Spearman $\rho = \mathbf{0.5877}$ (median $\mathbf{0.5000}$); SHAP mean Spearman $\rho = \mathbf{0.4517}$ (median $\mathbf{0.5000}$).
+- **Attribution Blind Spots**: In **21.47%** of evidence removals ($322 / 1,500$ evaluation instances across the 500 claims), the discrete verifier verdict flipped. In **16.15% (LIME)** and **16.77% (SHAP)** of these flips, the removed passage was ranked 2nd or 3rd by attribution, demonstrating that feature attribution alone fails to catch critical decision vulnerabilities.
 
-### Experiment 2: Fuzzy Reasoning vs. Linear Baseline ($N = 1,500$)
-Evaluates evidence reliability ranking under dynamic conflict and stability signals across 500 claims ($443$ positive labels in the frozen run):
+### Experiment 2: Fuzzy Reasoning vs. Linear Baseline (500 claims; 1,500 claim-evidence rows)
+Evaluates evidence reliability ranking under dynamic conflict and stability signals across 500 claims ($k=3$ passages per claim, producing 1,500 claim-evidence rows with 443 positive proxy labels in the official frozen run):
 - **Hypothesis $H_1$ (AUROC)**: Fuzzy reasoning achieved a statistically significant **$+0.0365$ higher AUROC** than the baseline under dynamic conflict ($\text{AUROC}_{\text{fuzzy}} = \mathbf{0.7630}$ vs. $\text{AUROC}_{\text{base}} = \mathbf{0.7265}$, $p_{\text{Holm}} = 0.0240$, FWER $\alpha = 0.05$).
 - **Hypothesis $H_2$ (Average Precision)**: The linear baseline achieved a statistically significant **$+0.1396$ higher AP** ($\text{AP}_{\text{base}} = \mathbf{0.6280}$ vs. $\text{AP}_{\text{fuzzy}} = \mathbf{0.4884}$, $p_{\text{Holm}} = 0.0020$).
-- **Within-Claim Top-1 Hit Rate**: Fuzzy reasoning ranked an annotated positive passage as Rank 1 in **73.00%** ($365 / 500$) of claims vs. **69.00%** ($345 / 500$) for the baseline ($\Delta = +4.00\%$, $+20$ claims).
-- **Secondary Ablation**: Transitioning from static defaults ($c_{\text{deg}}=0.0, s_{\text{stab}}=1.0$) to dynamic inputs caused the baseline's uniform multiplicative penalty to force **20.80% ($312 / 1,500$)** of scores identically to 0.0, collapsing baseline AUROC by $-0.1624$. The fuzzy engine's rule synergies mitigated this loss, dropping by only $-0.0316$.
+- **Within-Claim Top-1 Proxy-Label Hit Rate**: Under the original frozen proxy-label scheme, Fuzzy reasoning ranked a proxy-positive passage first in **73.00%** (365/500) of claims versus **69.00%** (345/500) for the baseline (Δ = +4.00 percentage points, +20 claims). These are proxy-label ranking results, not verified-gold evidence selection rates. Among the 430 claims with proxy-positive evidence in the retrieved top three, Fuzzy achieved **84.88%** (365/430) versus **80.23%** (345/430) for the baseline (+4.65 percentage points). This is a conditional proxy-label ranking result, not a verified-gold evidence selection rate.
+- **Secondary Ablation**: Transitioning from static defaults ($c_{\text{deg}}=0.0, s_{\text{stab}}=1.0$) to dynamic inputs caused the baseline's uniform multiplicative penalty to force **20.80% ($312 / 1,500$)** of passage scores identically to 0.0, collapsing baseline AUROC by $-0.1624$. The fuzzy engine's rule synergies mitigated this loss, dropping by only $-0.0316$.
 
-### NEI Label Semantics Sensitivity Audit ($N = 1,002$)
-In `copenlu/fever_gold_evidence`, `SUPPORTS` and `REFUTES` claims contain human-annotated gold evidence, while `NOT_ENOUGH_INFO` (NEI) claims contain retrieved Papelo evidence. A sensitivity audit re-evaluating the cohort excluding NEI claims ($334$ claims, $1,002$ instances, $296$ positive labels) revealed:
-- **AUROC**: The fuzzy advantage narrows to **$+0.0275$** ($\text{AUROC}_{\text{fuzzy}} = \mathbf{0.7561}$ vs. $\text{AUROC}_{\text{base}} = \mathbf{0.7286}$, $p_{\text{Holm}} = 0.1706$, not statistically significant at $\alpha = 0.05$).
-- **Average Precision**: The baseline AP advantage widens to **$+0.1983$** ($\text{AP}_{\text{base}} = \mathbf{0.7259}$ vs. $\text{AP}_{\text{fuzzy}} = \mathbf{0.5276}$, $p_{\text{Holm}} = 0.0004$).
-- **Within-Claim Top-1 Hit Rate**: Fuzzy achieves **82.34%** vs. Baseline **80.84%** ($\Delta = +1.50\%$, $+5$ claims).
+### NEI Evidence Label Sensitivity Audit (Protocols A & B)
+In `copenlu/fever_gold_evidence`, `SUPPORTS` and `REFUTES` claims contain human-annotated gold evidence, while `NOT_ENOUGH_INFO` (NEI) claims contain retrieved Papelo candidate passages. Of the 443 positive proxy instances in the official frozen Experiment 2, exactly 147 belong to NEI claims. Two sensitivity protocols in `DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md` evaluate the impact of correcting these label semantics:
+- **Protocol A (500 claims; 1,500 claim-evidence rows, NEI reclassified as distractors):**
+  All 500 claims are evaluated, with the 147 NEI passages reclassified as negative distractors ($y = 0$), leaving 296 verified gold instances and 1,204 distractors across 1,500 rows.
+  - **AUROC**: The estimated AUROC difference (Fuzzy − Baseline) is **$+0.0898$** under Protocol A ($\text{AUROC}_{\text{fuzzy}} = \mathbf{0.7386}$ vs. $\text{AUROC}_{\text{base}} = \mathbf{0.6488}$; Holm-adjusted $p = \mathbf{0.0020}$, statistically significant at $\alpha = 0.05$). No separate statistical test compared this difference against the corresponding estimates from the other evaluation protocols.
+  - **Average Precision**: Baseline AP advantage magnitude is **$0.0680$** ($\text{AP}_{\text{base}} = \mathbf{0.4217}$ vs. $\text{AP}_{\text{fuzzy}} = \mathbf{0.3537}$; Holm-adjusted $p = \mathbf{0.0020}$, statistically significant at $\alpha = 0.05$).
+  - **Top-1 Gold Selection**: On the 283 claims with verified gold evidence in the top 3, Fuzzy selects gold evidence as Rank 1 in **87.63%** ($248 / 283$) vs. Baseline **83.39%** ($236 / 283$) ($+4.24$ percentage points). Across all 500 claims, Fuzzy achieves **49.60%** ($248 / 500$) vs. Baseline **47.20%** ($236 / 500$) ($+2.40$ percentage points).
+- **Protocol B (334 verifiable claims; 1,002 claim-evidence rows, NEI claims excluded):**
+  Excludes all 166 NEI claims completely, evaluating only the 334 verifiable `SUPPORTS` and `REFUTES` claims ($k=3$ passages each, yielding 1,002 claim-evidence rows with 296 verified gold instances and 706 distractors).
+  - **AUROC**: The estimated AUROC difference (Fuzzy − Baseline) is **$+0.0827$** under Protocol B ($\text{AUROC}_{\text{fuzzy}} = \mathbf{0.7777}$ vs. $\text{AUROC}_{\text{base}} = \mathbf{0.6949}$; Holm-adjusted $p = \mathbf{0.0020}$, statistically significant at $\alpha = 0.05$). As with Protocol A, protocol-specific AUROC differences were evaluated within-protocol and not separately compared statistically against other protocols.
+  - **Average Precision**: Baseline AP advantage magnitude is **$0.1098$** ($\text{AP}_{\text{base}} = \mathbf{0.6189}$ vs. $\text{AP}_{\text{fuzzy}} = \mathbf{0.5091}$; Holm-adjusted $p = \mathbf{0.0020}$, statistically significant at $\alpha = 0.05$).
+  - **Top-1 Gold Selection**: On the 283 claims with verified gold evidence in the top 3, Fuzzy selects gold evidence as Rank 1 in **87.63%** ($248 / 283$) vs. Baseline **83.39%** ($236 / 283$) ($+4.24$ percentage points). Across all 334 verifiable claims, Fuzzy achieves **74.25%** ($248 / 334$) vs. Baseline **70.66%** ($236 / 334$) ($+3.59$ percentage points).
 
 ---
 
@@ -236,28 +243,31 @@ pip install -r requirements.txt
 
 ---
 
-## 9. Running the Application, Tests & Verifications
+## 9. Running the Application, Tests, and Verification Scripts
+
+The commands below document how to run the application, test suites, and verification scripts in a local environment. Their inclusion here does not imply that every command was executed during the latest repository-publication process (during which scripts and dependencies were statically inspected to preserve frozen assets). Consult the available phase reports and project documentation for previously documented development and testing checks.
 
 ### 9.1 Run Unit & Regression Tests
-Verify all 11 test modules:
+Command to execute available unit tests across all 11 test suites:
 ```bash
 pytest tests/
 ```
 
 ### 9.2 Launch the Interactive Streamlit Dashboard
+Command to launch the Streamlit web application:
 ```bash
 streamlit run app/main.py
 ```
 Provides an interactive web interface to enter custom claims, retrieve evidence, view cross-encoder verdicts, inspect SHAP/LIME attributions, trigger counterfactual interventions, and review fuzzy reliability breakdowns.
 
 ### 9.3 Instant Tabular Verification (< 30 seconds)
-Verify all primary metrics, confidence intervals, p-values, and ablations directly from frozen evaluation outputs without re-running neural models:
+Command to verify primary tabular metrics, confidence intervals, p-values, and ablations directly from frozen evaluation CSV outputs without re-running neural models:
 ```bash
 python scratch/verify_exp2.py
 ```
 
 ### 9.4 Re-running Formal Experiments
-To re-execute formal evaluation runs from scratch:
+Commands to re-execute formal evaluation runs from scratch:
 ```bash
 # Experiment 1 (Attribution vs. Intervention)
 python experiments/experiment1_formal.py
@@ -289,7 +299,7 @@ Prior to publishing, this project underwent an extensive multi-stage technical a
 ## 11. Known Methodological Limitations & Boundaries
 
 1. **Closed Evidence Pool**: The retriever operates over a closed candidate pool of 808 passages pre-seeded with gold evidence. The 86.00% retrieval coverage reflects this closed setting and should not be cited as open-domain performance.
-2. **Label Semantics Asymmetry**: In the evaluated 500-claim cohort, 147 positive evidence labels belong to NEI claims where evidence is derived from retrieved Papelo passages rather than annotator-verified gold evidence. When evaluating only verified gold evidence (excluding NEI), the fuzzy AUROC gain is $+0.0275$ ($p_{\text{Holm}} = 0.1706$, non-significant).
+2. **Label Semantics Asymmetry**: In the evaluated 500-claim cohort (1,500 claim-evidence rows), 147 positive evidence labels belong to NEI claims where evidence represents retrieved candidate passages rather than annotator-verified gold evidence. Under the corrected NEI-label sensitivity protocols, the estimated AUROC difference (Fuzzy − Baseline) is $+0.0898$ under Protocol A (all 500 claims, 1,500 rows; Holm-adjusted $p = 0.0020$, statistically significant at $\alpha = 0.05$) and $+0.0827$ under Protocol B (334 verifiable claims, 1,002 rows; Holm-adjusted $p = 0.0020$, statistically significant at $\alpha = 0.05$). These sensitivity analyses evaluate evidence-level proxy labels; evidence passages not annotated as gold are not necessarily false or irrelevant in an open-world sense.
 3. **Model Sensitivity vs. Real Causality**: Leave-one-out intervention influence ($\Delta P$) measures the sensitivity of the DeBERTa cross-encoder classification head, not real-world factual causality.
 4. **Context Window Constraint**: Fixed at top-$k = 3$ retrieved passages per claim.
 5. **Linear Baseline Zero-Collapse**: The linear baseline uses a uniform multiplicative penalty $(1 - c_{\text{deg}}) \cdot s_{\text{stab}}$, which forces scores to zero when contradiction is complete ($c_{\text{deg}} = 1.0$), heavily penalizing baseline AUROC under dynamic conflict.
