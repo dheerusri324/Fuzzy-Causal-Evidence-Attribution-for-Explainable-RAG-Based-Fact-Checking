@@ -7,6 +7,14 @@
 **Protocol:** `PHASE_11_EXPERIMENT_2_DESIGN_AUDIT.md` & `outputs/phase11/proposed_protocol.json`  
 **Status:** **FORMAL EXPERIMENT COMPLETED & FROZEN**  
 
+> [!IMPORTANT]
+> **Errata & Label-Semantics Notice (Post-Phase-13 Review)**:
+> - **Proxy-Label Scheme Demarcation**: The 443 positive instances evaluated in this official frozen Experiment 2 run represent a legacy proxy-label scheme consisting of **296 genuine human-annotated gold evidence passages** (154 for `SUPPORTS` and 142 for `REFUTES`) and **147 unannotated candidate proxy passages** associated with `NOT_ENOUGH_INFO` (NEI) claims from `copenlu/fever_gold_evidence`. In the FEVER benchmark, NEI claims have no human-annotated gold evidence.
+> - **Sensitivity Protocol Findings**: Full sensitivity audits isolating this distinction are documented in [`DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md`](DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md) and [`PRE_PHASE_14_AUDIT_ERRATA_V4.md`](PRE_PHASE_14_AUDIT_ERRATA_V4.md):
+>   - *Protocol A (500 claims; NEI candidate passages treated as negative distractors)*: $\text{AUROC}_{\text{fuzzy}} = 0.7386$ vs. $\text{AUROC}_{\text{base}} = 0.6488$ ($\Delta = +0.0898$, $p_{\text{Holm}} = 0.0020$).
+>   - *Protocol B (334 verifiable claims; NEI claims excluded entirely)*: $\text{AUROC}_{\text{fuzzy}} = 0.7777$ vs. $\text{AUROC}_{\text{base}} = 0.6949$ ($\Delta = +0.0827$, $p_{\text{Holm}} = 0.0020$).
+> - **Corrected Foundation Reference Citation**: The base paper citation is: Jean-Flavien Bussotti, Andrea Baraldi, Francesco Guerra, and Paolo Papotti, *"Explaining the Role of Evidence in Data-Driven Fact-Checking,"* *IEEE Access*, vol. 14, pp. 127752–127765, 2026, DOI: [10.1109/ACCESS.2026.3719082](https://doi.org/10.1109/ACCESS.2026.3719082).
+
 ---
 
 ## Executive Summary
@@ -15,7 +23,7 @@ This report documents the formal execution of **Experiment 2**, comparing the pr
 
 ### Core Empirical Findings:
 1. **Pre-Run Integrity Check (100.0% Pass)**:
-   - Evaluated exactly 500 claims, 1,500 evidence instances, zero duplicate evidence IDs within any claim, and 443 human-annotated gold instances ($29.53\%$).
+   - Evaluated exactly 500 claims, 1,500 evidence instances, zero duplicate evidence IDs within any claim, and 443 legacy positive proxy labels ($29.53\%$, comprising 296 genuine human-annotated gold evidence passages and 147 NEI candidate proxy passages).
    - Full 500-claim hybrid retrieval alignment passed with **100.0% identical Top-3 evidence IDs and ordering** against the frozen Experiment 1 reference dataset.
 2. **Co-Primary Discrimination Results (Primary Dynamic Condition)**:
    - **$H_1$ (AUROC)**: The fuzzy primary score (`evidence_reliability`) achieved a statistically significant **$+0.0365$ higher AUROC** than the primary baseline (`adjusted_baseline_score`):
@@ -57,8 +65,8 @@ Before any Experiment 2 scores were computed, automated assertions validated:
 | Evidence Per Claim | Exactly 3 | Exactly 3 for all 500 | **PASS** |
 | Duplicate Evidence IDs | 0 | 0 | **PASS** |
 | Finite Attribution & Influence | 100% | 100% non-null, finite | **PASS** |
-| Gold Evidence Match Count | 443 | 443 ($29.53\%$) | **PASS** |
-| Claims with $\ge 1$ Gold in Top-3 | 430 | 430 ($86.00\%$) | **PASS** |
+| Positive Proxy Label Match Count | 443 | 443 ($29.53\%$; 296 gold + 147 NEI proxy) | **PASS** |
+| Claims with $\ge 1$ Positive Proxy in Top-3 | 430 | 430 ($86.00\%$) | **PASS** |
 | Full 500-Claim Hybrid Retrieval Alignment | 100.0% | 100.0% identical IDs & order | **PASS** |
 
 ---
@@ -66,7 +74,7 @@ Before any Experiment 2 scores were computed, automated assertions validated:
 ## 2. Co-Primary Discrimination Results
 
 ### 2.1 Primary Condition: Full Dynamic Pipeline
-The co-primary hypotheses compare the fuzzy primary score (`evidence_reliability`) against the baseline primary score (`adjusted_baseline_score`) predicting binary FEVER gold status ($y_i \in \{0, 1\}$).
+The co-primary hypotheses compare the fuzzy primary score (`evidence_reliability`) against the baseline primary score (`adjusted_baseline_score`) predicting binary legacy positive proxy labels ($y_i \in \{0, 1\}$; 296 genuine gold + 147 NEI candidate proxy instances). Note that historical Phase 11 metrics evaluated this legacy positive-proxy scheme and do not represent Protocol A or Protocol B.
 
 Inference was conducted via a **Null-Centered Paired Claim-Level Cluster Bootstrap Test** ($B = 1,000$ replicates, seed = $42$) with **Holm–Bonferroni step-down correction**:
 
@@ -96,13 +104,13 @@ Top-1 metrics evaluate within-claim ranking utility, deterministically broken by
 
 | Metric ID | Description | Denominator | Fuzzy Hits (Rate) | Baseline Hits (Rate) | Difference ($\Delta$) | Direct Fuzzy-Baseline Agreement |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Metric A** | Top-1 Gold Hit Rate (All Claims) | $N = 500$ | **365 ($73.00\%$)** | 345 ($69.00\%$) | **+4.00%** (+20 claims) | **$437 / 500$ ($87.40\%$)** |
-| **Metric B** | Top-1 Gold Hit Rate (Gold-Present Claims) | $N = 430$ | **365 ($84.88\%$)** | 345 ($80.23\%$) | **+4.65%** (+20 claims) | — |
+| **Metric A** | Top-1 Legacy Proxy-Positive Hit Rate (All Claims) | $N = 500$ | **365 ($73.00\%$)** | 345 ($69.00\%$) | **+4.00%** (+20 claims) | **$437 / 500$ ($87.40\%$)** |
+| **Metric B** | Top-1 Legacy Proxy-Positive Hit Rate (Proxy-Present Claims) | $N = 430$ | **365 ($84.88\%$)** | 345 ($80.23\%$) | **+4.65%** (+20 claims) | — |
 
 ![Top-1 Evidence Alignment](outputs/phase11_formal/plots/top1_hit_rate_comparison.png)
 
 #### Practical Utility Takeaway:
-In $87.40\%$ of claims, fuzzy reasoning and the linear baseline select the exact same top evidence piece. However, in the $12.60\%$ of claims where they disagree ($63$ claims), **fuzzy reasoning selects the annotated gold passage in 20 additional claims**, providing a $+4.00\%$ net improvement in Top-1 gold passage retrieval accuracy.
+In $87.40\%$ of claims, fuzzy reasoning and the linear baseline select the exact same top evidence piece. However, in the $12.60\%$ of claims where they disagree ($63$ claims), **fuzzy reasoning selects the legacy proxy-positive passage in 20 additional claims**, providing a $+4.00\%$ net difference under the historical positive-proxy evaluation.
 
 ---
 

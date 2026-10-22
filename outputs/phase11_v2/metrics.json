@@ -1,0 +1,57 @@
+{
+  "evaluation_name": "Phase 11 V1 vs V2 Comparative Evaluation",
+  "timestamp": "2026-10-21T17:49:03.280645",
+  "total_instances_evaluated": 1500,
+  "total_claims_evaluated": 500,
+  "fallback_remediation": {
+    "v1_historical_fallback_count": 886,
+    "v1_historical_fallback_percentage": 59.07,
+    "v1_exact_0_5_rounded_rows": 906,
+    "v2_remediated_fallback_count": 0,
+    "v2_remediated_fallback_percentage": 0.0,
+    "fallback_reduction_delta": 886,
+    "computed_coverage_v1_percent": 40.93,
+    "computed_coverage_v2_percent": 100.0
+  },
+  "conflict_detection": {
+    "v1_method": "min_max_scaled",
+    "v1_max_saturation_count_at_1_0": 312,
+    "v2_method": "harmonic_mean",
+    "v2_continuous_distribution_mean": 0.20189197131888095,
+    "v2_continuous_distribution_std": 0.39498652426077324,
+    "v2_saturation_count_at_1_0": 0
+  },
+  "performance_metrics": {
+    "auroc": {
+      "v1_fuzzy": 0.7629754127593961,
+      "v1_baseline": 0.7265013849409824,
+      "v1_delta": 0.03647402781841369,
+      "v2_fuzzy": 0.6871837967244062,
+      "v2_baseline": 0.7194763065108243,
+      "v2_delta": -0.03229250978641807,
+      "v2_ci_95": [
+        -0.05677626808491709,
+        -0.007249514943905642
+      ],
+      "v2_p_value": 0.011
+    },
+    "average_precision": {
+      "v1_fuzzy": 0.48837377837582535,
+      "v1_baseline": 0.6279924341056068,
+      "v1_delta": -0.13961865572978144,
+      "v2_fuzzy": 0.5629512675041463,
+      "v2_baseline": 0.6323630269922507,
+      "v2_delta": -0.06941175948810441,
+      "v2_ci_95": [
+        -0.09700619531342992,
+        -0.040122275693197644
+      ],
+      "v2_p_value": 0.0
+    },
+    "spearman_rho": {
+      "v1_fuzzy": 0.46722829282200923,
+      "v2_fuzzy": 0.3148244984206123,
+      "v2_baseline": 0.3468378317344072
+    }
+  }
+}

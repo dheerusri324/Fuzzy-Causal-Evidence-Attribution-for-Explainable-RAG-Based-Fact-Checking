@@ -31,6 +31,7 @@ class Config:
     retrieval_mode: str = "hybrid"  # bm25 | dense | hybrid
     top_k: int = 5
     embedding_model: str = "all-MiniLM-L6-v2"
+    hybrid_fusion_method: str = "pool_union"  # pool_union | legacy
 
     # --- Verification ---
     verifier_model: str = "cross-encoder/nli-deberta-v3-base"
@@ -44,12 +45,14 @@ class Config:
     max_intervention_evidence: int = 5
 
     # --- Fuzzy Reasoning ---
+    fuzzy_engine_version: str = "v2"  # v1 | v2
     fuzzy_shap_weight: float = 0.5
     fuzzy_lime_weight: float = 0.5
     fuzzy_baseline_weights: dict = None  # defined post_init
 
     # --- Conflict & Stability (Phase 8) ---
     conflict_role_threshold: float = 0.5
+    conflict_score_method: str = "harmonic_mean"  # harmonic_mean | min_max
     stability_perturbation: str = "permutation"
 
     # --- Device / Compute ---

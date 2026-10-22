@@ -48,7 +48,7 @@ To resolve this, the system implements an end-to-end modular pipeline consisting
                                           ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
 │ 7. Fuzzy Evidence Reasoning Engine vs. Linear Baseline                        │
-│    - Mamdani System (11 Rules across 5 Outputs, Centroid Defuzzification)     │
+│    - Mamdani System (V1: 11 Rules; V2: 33 Rules, Centroid Defuzzification)    │
 │    - Linear Weighted Baseline (Additive Stability, Multiplicative Penalty)    │
 └───────────────────────────────────────┬───────────────────────────────────────┘
                                         │ Graded Reliability & Confidence
@@ -125,15 +125,16 @@ To resolve this, the system implements an end-to-end modular pipeline consisting
     5. Contradiction Degree ($c_{\text{deg}} \in [0, 1]$)
     6. Stability Score ($s_{\text{stab}} \in [0, 1]$)
   - Membership functions: Triangular and trapezoidal sets (`LOW`, `MEDIUM`, `HIGH`).
-  - Rule base: **11 fuzzy IF-THEN rules** across **5 output variables**:
-    - **8 primary domain synergy rules** (`rule1` through `rule8`): capture non-linear interactions across inputs.
-    - **3 baseline passthrough rules** (`rule9` through `rule11`): guarantee active inference coverage across all output variables.
-  - Consequent Output Variables:
-    1. `evidence_reliability` (Primary score, targeted by Rules 1, 3, 8)
-    2. `explanation_confidence` (Diagnostic score, targeted by Rules 2, 6, 7)
-    3. `evidence_relevance` (Targeted by Rules 9, 10)
-    4. `support_degree` (Targeted by Rule 5)
-    5. `contradiction_output` (Targeted by Rules 4, 11)
+  - Rule base:
+    - **V1 Engine (Historical Baseline)**: **11 fuzzy IF-THEN rules** across **5 output variables**:
+      - **8 primary domain synergy rules** (`rule1` through `rule8`): capture non-linear interactions across inputs.
+      - **3 baseline passthrough rules** (`rule9` through `rule11`): provide baseline mapping for individual variables.
+    - **V2 Engine (Active Remediated Engine)**: **33 partitioned fuzzy IF-THEN rules** across **5 output variables** guaranteeing 100% computed input-space coverage without dead zones or silent fallbacks:
+      - `evidence_relevance` (3 rules): complete partition over relevance (`HIGH`, `MEDIUM`, `LOW`).
+      - `contradiction_output` (5 rules): distractor-aware partition across contradiction and relevance.
+      - `support_degree` (7 rules): comprehensive partition across contradiction, relevance, and intervention.
+      - `evidence_reliability` (10 rules): full partition over relevance, attribution, intervention, contradiction, and source reliability.
+      - `explanation_confidence` (8 rules): full partition across attribution, intervention, and stability combinations.
   - Defuzzification: Centroid (center-of-gravity) integration over $[0, 1]$.
 - **Linear Weighted Baseline**:
   - Two-stage scoring implementation in [`fuzzy/baseline.py`](file:///c:/Users/dheer/OneDrive/Documents/Fuzzy-Causal%20Evidence%20Attribution%20for%20Explainable%20RAG-Based%20Fact-Checking/fuzzy/baseline.py):

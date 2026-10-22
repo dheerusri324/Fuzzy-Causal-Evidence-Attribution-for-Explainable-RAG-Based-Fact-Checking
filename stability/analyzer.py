@@ -7,6 +7,7 @@ baseline and perturbed attributions to output a stability score in [0,1].
 """
 
 import copy
+import math
 import random
 from typing import List, Dict, Optional
 import scipy.stats as stats
@@ -49,11 +50,21 @@ class StabilityAnalyzer:
         baseline_scores = self._get_attribution_scores(f"{claim_id}_base", claim, evidence_list)
         
         # 2. Apply controlled perturbation: Evidence-order permutation
-        # The prompt prioritizes "EVIDENCE-ORDER PERMUTATION".
+        # Limitation Note:
+        # The default "permutation" (or "reverse") strategy performs a single deterministic list reversal
+        # (pi = [k, ..., 1]). For k=3, this evaluates a single permutation rather than all 3! = 6 permutations.
+        # This deterministic behavior is preserved for backwards compatibility with the Phase 8/11 protocols.
+        # Alternatively, "random_shuffle" shuffles evidence order using a configured seed.
         perturbed_evidence = list(evidence_list)
-        if self.perturbation_type == "permutation":
-            # For determinism in basic cases, we can just reverse. Or use a fixed seed.
-            # We will just reverse it to guarantee a different order.
+        if self.perturbation_type in ("permutation", "reverse"):
+            # Deterministic list reversal
+            perturbed_evidence.reverse()
+        elif self.perturbation_type == "random_shuffle":
+            seed = getattr(self.config, "random_seed", getattr(self.config, "seed", 42))
+            rng = random.Random(seed)
+            rng.shuffle(perturbed_evidence)
+        else:
+            # Default fallback to reversal
             perturbed_evidence.reverse()
         
         # 3. Compute perturbed attribution
@@ -86,5 +97,3 @@ class StabilityAnalyzer:
             spearman_correlation=rho,
             stability_score=stability_score
         )
-
-import math

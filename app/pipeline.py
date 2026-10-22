@@ -31,7 +31,8 @@ class FactCheckingPipeline:
         self.intervener = EvidenceIntervener(verifier=self.verifier, config=self.config)
         self.conflict_detector = ConflictDetector(verifier=self.verifier, config=self.config)
         self.stability_analyzer = StabilityAnalyzer(explainer=self.explainer, config=self.config)
-        self.fuzzy_engine = FuzzyEvidenceEngine(config=self.config)
+        fuzzy_version = getattr(self.config, "fuzzy_engine_version", "v2")
+        self.fuzzy_engine = FuzzyEvidenceEngine(config=self.config, version=fuzzy_version)
 
     def process(self, claim: str, claim_id: Optional[str] = None) -> PipelineResult:
         if not claim_id:
@@ -59,6 +60,7 @@ class FactCheckingPipeline:
         
         # 5. Conflict Detection
         conf_res = self.conflict_detector.detect(claim_id, claim, evs)
+        role_info_map = {er.evidence_id: er for er in conf_res.evidence_roles}
         role_map = {er.evidence_id: er.assigned_role for er in conf_res.evidence_roles}
         
         # 6. Stability Analysis
@@ -73,6 +75,8 @@ class FactCheckingPipeline:
             ea = attr_map.get(eid)
             ei = int_map.get(eid)
             role = role_map.get(eid, "NEUTRAL")
+            er_info = role_info_map.get(eid)
+            passage_contradiction = er_info.refute_probability if er_info else 0.0
             
             shap_val = ea.shap_target if ea else 0.0
             lime_val = ea.lime_target if ea else 0.0
@@ -80,13 +84,14 @@ class FactCheckingPipeline:
             delta_p = ei.intervention_influence if ei else 0.0
             verdict_changed = ei.verdict_changed if ei else False
             
-            # Construct Fuzzy Inputs
+            # Construct Fuzzy Inputs: decouple passage contradiction from claim-level conflict
             fuz_input = FuzzyInput(
                 relevance=ev.retrieval_score,
                 attribution_shap=shap_val,
                 attribution_lime=lime_val,
                 intervention_influence=delta_p,
-                contradiction_degree=conf_res.conflict_score,
+                contradiction_degree=passage_contradiction,
+                claim_conflict=conf_res.conflict_score,
                 stability_score=stab_res.stability_score
             )
             

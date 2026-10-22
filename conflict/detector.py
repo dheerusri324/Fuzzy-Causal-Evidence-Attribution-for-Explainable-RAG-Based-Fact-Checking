@@ -21,6 +21,7 @@ class ConflictDetector:
         self.verifier = verifier
         self.config = config or Config()
         self.threshold = getattr(self.config, "conflict_role_threshold", 0.5)
+        self.score_method = getattr(self.config, "conflict_score_method", "harmonic_mean")
 
     def detect(self, claim_id: str, claim: str, evidence_list: List[RetrievedEvidence]) -> ConflictResult:
         """Analyze evidence list for conflicts."""
@@ -71,14 +72,22 @@ class ConflictDetector:
         conflict_detected = len(supporting_ids) > 0 and len(refuting_ids) > 0
         
         # Conflict Score Formulation:
-        # 0 = no conflict, 1 = strong conflict.
-        # We use a simple harmonic mean-style bounding or min-max intersection.
-        # The simplest deterministic formulation is to take the minimum of the highest 
-        # support and highest refute, then scale it up (multiply by 2) bounded at 1.0.
-        # If max_sup=0.9 and max_ref=0.8, min is 0.8, score = min(1.0, 1.6) = 1.0.
-        # If max_sup=0.9 and max_ref=0.0, score = 0.0.
+        # Default Method: Harmonic Mean of max_support and max_refute:
+        #   H = 2 * (max_support * max_refute) / (max_support + max_refute)
+        # Guarantees continuous, bounded variation in [0, 1] without premature binary saturation.
+        #
+        # Epistemic Interpretation:
+        # The conflict score quantifies the degree of mutual evidential tension derived from the
+        # cross-encoder verifier's support and refutation probabilities.
+        # It is an index of multi-source disagreement, NOT a probability that the claim itself is false.
         if conflict_detected:
-            conflict_score = min(1.0, 2.0 * min(max_support, max_refute))
+            if self.score_method == "min_max":
+                # Historical V1 baseline formula (subject to binary clipping at 1.0 when both > 0.5)
+                conflict_score = min(1.0, 2.0 * min(max_support, max_refute))
+            else:
+                # Remediated V2 continuous harmonic mean formula
+                denom = max_support + max_refute
+                conflict_score = float(2.0 * (max_support * max_refute) / denom) if denom > 0.0 else 0.0
         else:
             conflict_score = 0.0
             

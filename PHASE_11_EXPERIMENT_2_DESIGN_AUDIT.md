@@ -1,5 +1,15 @@
 # Phase 11 — Experiment 2 Design and Methodology Audit
 
+> [!IMPORTANT]
+> **Errata & Label-Semantics Notice (Post-Phase-13 Review)**:
+> - **Proxy-Label Scheme Demarcation**: The 443 positive instances evaluated in the official frozen Experiment 2 run represent a legacy proxy-label scheme consisting of **296 genuine human-annotated gold evidence passages** (154 for `SUPPORTS` and 142 for `REFUTES`) and **147 unannotated candidate proxy passages** associated with `NOT_ENOUGH_INFO` (NEI) claims from `copenlu/fever_gold_evidence`. In the FEVER benchmark, NEI claims have no human-annotated gold evidence.
+> - **Sensitivity Protocol Findings**: Full sensitivity audits isolating this distinction are documented in [`DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md`](DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md) and [`PRE_PHASE_14_AUDIT_ERRATA_V4.md`](PRE_PHASE_14_AUDIT_ERRATA_V4.md):
+>   - *Protocol A (500 claims; NEI candidate passages treated as negative distractors)*: $\text{AUROC}_{\text{fuzzy}} = 0.7386$ vs. $\text{AUROC}_{\text{base}} = 0.6488$ ($\Delta = +0.0898$, $p_{\text{Holm}} = 0.0020$).
+>   - *Protocol B (334 verifiable claims; NEI claims excluded entirely)*: $\text{AUROC}_{\text{fuzzy}} = 0.7777$ vs. $\text{AUROC}_{\text{base}} = 0.6949$ ($\Delta = +0.0827$, $p_{\text{Holm}} = 0.0020$).
+> - **Corrected Foundation Reference Citation**: The base paper citation is: Jean-Flavien Bussotti, Andrea Baraldi, Francesco Guerra, and Paolo Papotti, *"Explaining the Role of Evidence in Data-Driven Fact-Checking,"* *IEEE Access*, vol. 14, pp. 127752–127765, 2026, DOI: [10.1109/ACCESS.2026.3719082](https://doi.org/10.1109/ACCESS.2026.3719082).
+
+---
+
 ## Executive Summary
 
 This report establishes the finalized, audited research design, mathematical formalization, and statistical inference protocol for **Experiment 2**, which evaluates:
@@ -104,7 +114,7 @@ A rigorous scientific framing requires explicit conceptual separation of the eva
 ### 3.2 Evaluation Target Framing
 - **Discrimination Proxy**: AUROC and Average Precision quantify the model's ability to **distinguish human-annotated gold evidence from other retrieved passages**, NOT real-world evidence reliability or factual truth.
 - **Candidate Pool Scope**: Closed candidate pool of 808 Wikipedia passages, pre-seeded with all 534 gold passages from evaluated claims, alongside 274 distractors.
-- **Evaluated Population**: Exactly 1,500 retrieved instances ($k=3$ passages across 500 claims): 443 gold instances ($29.53\%$) and 1,057 distractors ($70.47\%$). All 500 evaluated claims have non-empty gold annotations.
+- **Evaluated Population**: Exactly 1,500 retrieved instances ($k=3$ passages across 500 claims): 443 legacy positive proxy labels ($29.53\%$, comprising 296 genuine human-annotated gold evidence passages and 147 NEI candidate proxy passages) and 1,057 distractors ($70.47\%$). Of the 500 evaluated claims, 334 are verifiable claims (`SUPPORTS` / `REFUTES`) possessing genuine human-annotated gold evidence, while 166 are `NOT_ENOUGH_INFO` claims lacking human gold annotations whose candidate passages served as positive proxy labels in the historical evaluation. Note that historical metrics evaluated this legacy positive-proxy scheme and do not represent Protocol A or Protocol B.
 - **Symmetrical Expectations**: Results reflect this gold-conditioned setting rather than full-Wikipedia open retrieval. Results may favor neither method, and both methods may demonstrate low discrimination.
 
 ---
