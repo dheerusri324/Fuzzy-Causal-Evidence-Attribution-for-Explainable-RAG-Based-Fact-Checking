@@ -20,10 +20,10 @@ decouples claim-level conflict from passage-level contradiction, and preserves o
 | **Computed Coverage** | 40.93% (614/1,500) | **100.00% (1,500/1,500)** | Full input-space defuzzification |
 | **Conflict Detection** | Min-max scaled (saturated) | **Continuous Harmonic Mean** | Smooth, non-saturating scoring |
 | **Conflict Saturation (== 1.0)** | 312 rows | **0 rows** | Continuous variation preserved |
-| **AUROC (Fuzzy)** | 0.7630 | **0.6872** | Robust discrimination preserved |
-| **AUROC Delta (vs Baseline)** | +0.0365 | **-0.0323** | Statistically consistent |
-| **AUPR (Fuzzy)** | 0.4884 | **0.5630** | Robust precision preserved |
-| **Spearman $\rho$ with Gold** | 0.4672 | **0.3148** | Monotonic alignment preserved |
+| **AUROC (Fuzzy)** | 0.7630 | **0.6872** | Fuzzy lower than baseline (baseline: 0.7195) |
+| **AUROC Delta (vs Baseline)** | +0.0365 | **-0.0323** | Baseline favored over fuzzy on AUROC |
+| **AUPR (Fuzzy)** | 0.4884 | **0.5630** | Fuzzy lower than baseline (baseline: 0.6324) |
+| **Spearman $\rho$ with Gold** | 0.4672 | **0.3148** | Lower correlation than baseline (0.3845) |
 
 ## 2. Field-Level Status Audit (V2)
 

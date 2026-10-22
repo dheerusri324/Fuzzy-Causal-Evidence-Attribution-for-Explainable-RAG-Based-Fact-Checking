@@ -15,7 +15,7 @@ This report documents the formal execution of **Experiment 2**, comparing the pr
 
 ### Core Empirical Findings:
 1. **Pre-Run Integrity Check (100.0% Pass)**:
-   - Evaluated exactly 500 claims, 1,500 evidence instances, zero duplicate evidence IDs within any claim, and 443 human-annotated gold instances ($29.53\%$).
+   - Evaluated exactly 500 claims, 1,500 evidence instances, zero duplicate evidence IDs within any claim, and 443 legacy positive proxy labels ($29.53\%$, comprising 296 genuine human-annotated gold evidence passages and 147 NEI candidate proxy passages).
    - Full 500-claim hybrid retrieval alignment passed with **100.0% identical Top-3 evidence IDs and ordering** against the frozen Experiment 1 reference dataset.
 2. **Co-Primary Discrimination Results (Primary Dynamic Condition)**:
    - **$H_1$ (AUROC)**: The fuzzy primary score (`evidence_reliability`) achieved a statistically significant **$+0.0365$ higher AUROC** than the primary baseline (`adjusted_baseline_score`):
@@ -57,8 +57,8 @@ Before any Experiment 2 scores were computed, automated assertions validated:
 | Evidence Per Claim | Exactly 3 | Exactly 3 for all 500 | **PASS** |
 | Duplicate Evidence IDs | 0 | 0 | **PASS** |
 | Finite Attribution & Influence | 100% | 100% non-null, finite | **PASS** |
-| Gold Evidence Match Count | 443 | 443 ($29.53\%$) | **PASS** |
-| Claims with $\ge 1$ Gold in Top-3 | 430 | 430 ($86.00\%$) | **PASS** |
+| Positive Proxy Label Match Count | 443 | 443 ($29.53\%$; 296 gold + 147 NEI proxy) | **PASS** |
+| Claims with $\ge 1$ Positive Proxy in Top-3 | 430 | 430 ($86.00\%$) | **PASS** |
 | Full 500-Claim Hybrid Retrieval Alignment | 100.0% | 100.0% identical IDs & order | **PASS** |
 
 ---

@@ -1,0 +1,135 @@
+{
+  "evaluation_name": "Phase 11 V2 Corrected Dual-Protocol Evaluation",
+  "timestamp": "2026-10-22T19:49:01.511084",
+  "total_instances_evaluated": 1500,
+  "total_claims_evaluated": 500,
+  "fallback_remediation": {
+    "v1_historical_fallback_count": 886,
+    "v1_historical_fallback_percentage": 59.07,
+    "v1_exact_0_5_rounded_rows": 906,
+    "v2_corrected_fallback_count": 0,
+    "v2_corrected_fallback_percentage": 0.0,
+    "fallback_reduction_delta": 886,
+    "computed_coverage_v1_percent": 40.93,
+    "computed_coverage_v2_percent": 100.0
+  },
+  "conflict_detection": {
+    "method": "harmonic_mean",
+    "distribution_mean": 0.20189197131888095,
+    "distribution_std": 0.39498652426077324,
+    "saturation_count_at_1_0": 0
+  },
+  "protocol_a_primary": {
+    "protocol_description": "All 500 claims; NEI candidates treated as negative distractors",
+    "sample_counts": {
+      "claims_evaluated": 500,
+      "evidence_rows": 1500,
+      "positive_labels": 296,
+      "negative_labels": 1204,
+      "nei_claims": 166
+    },
+    "auroc": {
+      "fuzzy": 0.6905556927359253,
+      "baseline": 0.6879279092215139,
+      "delta": 0.002627783514411397,
+      "ci_95": [
+        -0.021859087132877337,
+        0.027934906841867307
+      ],
+      "standard_error": 0.012897570601489343,
+      "p_value_raw": 0.8281718281718282,
+      "p_value_holm": 0.8281718281718282,
+      "exceedances": 828,
+      "replicates_valid": 1000,
+      "replicates_degenerate": 0,
+      "favors": "fuzzy"
+    },
+    "average_precision": {
+      "fuzzy": 0.44953027803273926,
+      "baseline": 0.5294027673195786,
+      "delta": -0.07987248928683932,
+      "ci_95": [
+        -0.11356379074122405,
+        -0.03897886188126267
+      ],
+      "standard_error": 0.019322659049620747,
+      "p_value_raw": 0.001998001998001998,
+      "p_value_holm": 0.003996003996003996,
+      "exceedances": 1,
+      "replicates_valid": 1000,
+      "replicates_degenerate": 0,
+      "favors": "baseline"
+    },
+    "spearman_rho": {
+      "fuzzy": 0.2796030715044271,
+      "baseline": 0.2590895184743091,
+      "p_fuzzy": 2.4261517719881366e-28,
+      "p_baseline": 1.9663707607635163e-24
+    },
+    "top1_hit_rate": {
+      "fuzzy_hits": 209,
+      "fuzzy_rate": 0.418,
+      "baseline_hits": 173,
+      "baseline_rate": 0.346,
+      "direct_agreement_count": 298,
+      "direct_agreement_rate": 0.596
+    }
+  },
+  "protocol_b_sensitivity": {
+    "protocol_description": "Verifiable claims only (SUPPORTS and REFUTES); excluding NEI claims",
+    "sample_counts": {
+      "claims_evaluated": 334,
+      "claims_excluded": 166,
+      "evidence_rows_retained": 1002,
+      "evidence_rows_excluded": 498,
+      "positive_labels": 296,
+      "negative_labels": 706
+    },
+    "auroc": {
+      "fuzzy": 0.7163238840823827,
+      "baseline": 0.7120889480131689,
+      "delta": 0.004234936069213768,
+      "ci_95": [
+        -0.02220063809515012,
+        0.029971029493776308
+      ],
+      "standard_error": 0.013235564608124162,
+      "p_value_raw": 0.7492507492507493,
+      "p_value_holm": 0.7492507492507493,
+      "exceedances": 749,
+      "replicates_valid": 1000,
+      "replicates_degenerate": 0,
+      "favors": "fuzzy"
+    },
+    "average_precision": {
+      "fuzzy": 0.6110078668780743,
+      "baseline": 0.6551850636778075,
+      "delta": -0.0441771967997332,
+      "ci_95": [
+        -0.07751003880855979,
+        -0.01203718503914178
+      ],
+      "standard_error": 0.016280066992176927,
+      "p_value_raw": 0.011988011988011988,
+      "p_value_holm": 0.023976023976023976,
+      "exceedances": 11,
+      "replicates_valid": 1000,
+      "replicates_degenerate": 0,
+      "favors": "baseline"
+    },
+    "spearman_rho": {
+      "fuzzy": 0.3669277501740354,
+      "baseline": 0.33518869734075063,
+      "p_fuzzy": 2.7159825015437126e-33,
+      "p_baseline": 9.85606334403278e-28
+    },
+    "top1_hit_rate": {
+      "fuzzy_hits": 209,
+      "fuzzy_rate": 0.6257,
+      "baseline_hits": 173,
+      "baseline_rate": 0.518,
+      "direct_agreement_count": 201,
+      "direct_agreement_rate": 0.6018
+    }
+  }
+}

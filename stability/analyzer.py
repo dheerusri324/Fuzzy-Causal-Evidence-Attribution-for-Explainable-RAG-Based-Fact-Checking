@@ -7,6 +7,7 @@ baseline and perturbed attributions to output a stability score in [0,1].
 """
 
 import copy
+import math
 import random
 from typing import List, Dict, Optional
 import scipy.stats as stats
@@ -59,7 +60,7 @@ class StabilityAnalyzer:
             # Deterministic list reversal
             perturbed_evidence.reverse()
         elif self.perturbation_type == "random_shuffle":
-            seed = getattr(self.config, "seed", 42)
+            seed = getattr(self.config, "random_seed", getattr(self.config, "seed", 42))
             rng = random.Random(seed)
             rng.shuffle(perturbed_evidence)
         else:
@@ -96,5 +97,3 @@ class StabilityAnalyzer:
             spearman_correlation=rho,
             stability_score=stability_score
         )
-
-import math

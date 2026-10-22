@@ -116,7 +116,7 @@ $$\xrightarrow{\text{LOO Intervention}} \text{Influence } i \xrightarrow{\text{N
 - **Secondary Diagnostic Scores**: `explanation_confidence` (fuzzy) and `baseline_raw_score` (baseline without contradiction discounting).
 
 ### 3. Sample Size & Annotation Proxy
-- Exactly 500 claims, 1,500 evidence instances (443 annotated gold, 1,057 distractors).
+- Exactly 500 claims, 1,500 evidence instances (443 legacy positive proxy labels, comprising 296 genuine human-annotated gold evidence passages and 147 NEI candidate proxy passages; 1,057 distractors). Note that historical metrics evaluated this legacy positive-proxy scheme and do not represent Protocol A or Protocol B.
 - FEVER gold annotations represent extrinsic human annotators' minimal sufficient sets, functioning as a relevance proxy rather than an exhaustive real-world truth label.
 
 ### 4. Co-Primary Discrimination Results (Dynamic Condition)

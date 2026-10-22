@@ -46,10 +46,10 @@ During formal evaluation, the hybrid retriever (BM25 + `sentence-transformers/al
 | :--- | :---: | :---: |
 | Total Evaluated Claims | 500 | 100.0% |
 | Total Evaluated Evidence Instances | 1,500 | Exactly $3$ per claim |
-| Claims with $\ge 1$ Gold Evidence in Top-3 | 430 | **86.00%** |
-| Claims with ALL Gold Evidence in Top-3 (Non-empty gold sets, $N=430$) | 258 | **60.00%** |
-| Total Retrieved Passages Matching Gold Annotations | 443 | **29.53%** ($443 / 1,500$) |
-| Total Retrieved Distractor Passages (Non-annotated) | 1,057 | **70.47%** ($1,057 / 1,500$) |
+| Claims with $\ge 1$ Positive Proxy Passage in Top-3 (Legacy) | 430 | **86.00%** (430 / 500) |
+| Verifiable Claims with $\ge 1$ Genuine Gold Evidence in Top-3 | 283 | **84.73%** (283 / 334) |
+| Total Retrieved Passages Matching Legacy Positive Proxies | 443 | **29.53%** ($443 / 1,500$; 296 genuine gold + 147 NEI candidate proxies) |
+| Total Retrieved Distractor Passages (Legacy Non-proxy) | 1,057 | **70.47%** ($1,057 / 1,500$) |
 
 ### Critical Scientific Nuance:
 > [!WARNING]

@@ -1,0 +1,87 @@
+{
+  "manifest_version": "1.0",
+  "evaluation_name": "Phase 11 V2 Corrected Dual-Protocol Evaluation",
+  "timestamp_start": "2026-10-22T19:47:26.257407",
+  "timestamp_completed": "2026-10-22T19:49:01.521769",
+  "duration_seconds": 95.26,
+  "execution_environment": {
+    "python_version": "3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]",
+    "platform": "win32"
+  },
+  "git_provenance": {
+    "branch": "fix/fuzzy-pipeline-v2",
+    "base_commit": "58d4180",
+    "status": "working_tree_evaluated"
+  },
+  "source_code_fingerprints": {
+    "conflict/detector.py": "57bd7075993e2f461bfc6cfa7814219db69671827160d339128c440060597ee5",
+    "stability/analyzer.py": "93f8bddb47097baeecb14d537a4e1a0b01fc54a0900e19bb41e5d62edc4a8510",
+    "fuzzy/engine.py": "3e4a1e714d6855192c42f9129369db4bdeb117108d1a26f3a66f7e4924bcecf5",
+    "attribution/explainer.py": "df097ae0ad83420d76fcc3a9ff074d2fb35ec536e3edbb6a428e6429ddda200a",
+    "fuzzy/baseline.py": "74c4f6820229f6f22e742a0670e90e737364e59518952ddbd1b21f9ab291604a"
+  },
+  "configuration": {
+    "top_k": 3,
+    "retrieval_mode": "hybrid",
+    "hybrid_fusion_method": "legacy",
+    "conflict_score_method": "harmonic_mean",
+    "conflict_role_threshold": 0.5,
+    "stability_perturbation": "permutation",
+    "random_seed": 42
+  },
+  "input_artifacts": {
+    "dataset_fever_dev": {
+      "path": "data/fever_dev.jsonl",
+      "sha256": "4eeee706df78ffd38df75f34a8134b1fed70210d4b07d08b430115b4f93de7e9",
+      "claims_evaluated": 500
+    },
+    "evidence_corpus": {
+      "path": "data/evidence_corpus.json",
+      "sha256": "eead34c0266ca8907f0788f45bf5cf30b451e373921b0106a7b8d7627ea5d943",
+      "passages_count": 808
+    },
+    "phase10_reference": {
+      "path": "outputs/phase10_formal/results.csv",
+      "sha256": "75746ff340e8a5165547208bf4123ed8147790ab3a5bddba938b2d393cff1ea6",
+      "rows_count": 1500
+    }
+  },
+  "feature_provenance": {
+    "attribution_features": {
+      "source": "outputs/phase10_formal/results.csv",
+      "status": "frozen_controlled",
+      "rationale": "Controlled comparison against Phase 10 frozen inputs; DeBERTa NLI SHAP/LIME recomputation requires extensive CPU runtime"
+    },
+    "intervention_influence": {
+      "source": "outputs/phase10_formal/results.csv",
+      "status": "frozen_controlled"
+    },
+    "conflict_score_dynamic": {
+      "source": "ConflictDetector (continuous harmonic mean)",
+      "status": "recomputed_harmonic_mean",
+      "cache_status": "accepted"
+    },
+    "stability_score_dynamic": {
+      "source": "outputs/phase11_formal/.signals_cache.json",
+      "status": "frozen_historical_controlled",
+      "rationale": "Historical stability scores preserved for controlled ablation comparison; full explainer re-run takes >50 min on CPU"
+    },
+    "fuzzy_engine": {
+      "source": "FuzzyEvidenceEngine (v2)",
+      "rules_count": 33,
+      "status": "live_v2_remediated",
+      "fallbacks_observed": 0
+    },
+    "baseline_scoring": {
+      "source": "compute_baseline_score",
+      "status": "live_linear_baseline"
+    }
+  },
+  "statistical_protocol": {
+    "method": "Null-Centered Paired Claim-Level Cluster Bootstrap",
+    "replicates_requested": 1000,
+    "random_seed": 42,
+    "finite_simulation_correction": "p = (exceedances + 1) / (valid_replicates + 1)",
+    "multiplicity_adjustment": "Holm-Bonferroni step-down per protocol family"
+  }
+}

@@ -114,7 +114,7 @@ A rigorous scientific framing requires explicit conceptual separation of the eva
 ### 3.2 Evaluation Target Framing
 - **Discrimination Proxy**: AUROC and Average Precision quantify the model's ability to **distinguish human-annotated gold evidence from other retrieved passages**, NOT real-world evidence reliability or factual truth.
 - **Candidate Pool Scope**: Closed candidate pool of 808 Wikipedia passages, pre-seeded with all 534 gold passages from evaluated claims, alongside 274 distractors.
-- **Evaluated Population**: Exactly 1,500 retrieved instances ($k=3$ passages across 500 claims): 443 gold instances ($29.53\%$) and 1,057 distractors ($70.47\%$). All 500 evaluated claims have non-empty gold annotations.
+- **Evaluated Population**: Exactly 1,500 retrieved instances ($k=3$ passages across 500 claims): 443 legacy positive proxy labels ($29.53\%$, comprising 296 genuine human-annotated gold evidence passages and 147 NEI candidate proxy passages) and 1,057 distractors ($70.47\%$). Of the 500 evaluated claims, 334 are verifiable claims (`SUPPORTS` / `REFUTES`) possessing genuine human-annotated gold evidence, while 166 are `NOT_ENOUGH_INFO` claims lacking human gold annotations whose candidate passages served as positive proxy labels in the historical evaluation. Note that historical metrics evaluated this legacy positive-proxy scheme and do not represent Protocol A or Protocol B.
 - **Symmetrical Expectations**: Results reflect this gold-conditioned setting rather than full-Wikipedia open retrieval. Results may favor neither method, and both methods may demonstrate low discrimination.
 
 ---

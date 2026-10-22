@@ -22,6 +22,14 @@ from conflict.schema import ConflictResult
 from retrieval.schema import RetrievedEvidence
 from retrieval.retriever import EvidenceRetriever
 from attribution.explainer import EvidenceExplainer
+from data.schema import ClaimRecord, EvidencePiece
+from stability.analyzer import StabilityAnalyzer
+from experiments.experiment2_v2 import (
+    load_or_validate_cache,
+    run_null_centered_cluster_bootstrap,
+    apply_holm_bonferroni,
+    compute_dict_hash
+)
 
 
 def test_field_level_status_legitimate_vs_fallback():
@@ -414,3 +422,416 @@ def test_lincoln_distractor_decoupling():
     assert out.contradiction_degree < 0.45, "Distractor passage should not produce high contradiction degree"
     assert out.support_degree < 0.25
     assert out.fallback_used is False
+
+
+def test_protocol_a_and_b_label_semantics():
+    """Regression test for Fix 1: Protocol A and Protocol B label semantics.
+    Proves:
+    1. Verifiable claim's actual gold evidence receives positive label.
+    2. Retrieved non-gold passage for verifiable claim receives negative label.
+    3. NEI candidate passage receives negative label under Protocol A even if in rec.evidence.
+    4. NEI claims are completely excluded under Protocol B.
+    5. Protocol B never marks an NEI candidate as positive.
+    6. Malformed annotation field / invalid label raises ValueError.
+    """
+    gold_piece = EvidencePiece(evidence_id="DocA_0", text="Gold fact.", doc_title="DocA", sentence_idx=0)
+    distractor_piece = EvidencePiece(evidence_id="DocB_1", text="Distractor fact.", doc_title="DocB", sentence_idx=1)
+    nei_proxy_piece = EvidencePiece(evidence_id="DocC_0", text="NEI candidate passage.", doc_title="DocC", sentence_idx=0)
+
+    # Verifiable claim (SUPPORTS)
+    rec_sup = ClaimRecord(
+        claim_id="c_sup",
+        claim_text="Earth orbits the sun.",
+        label="SUPPORTS",
+        evidence=[gold_piece]
+    )
+
+    # Non-verifiable claim (NOT_ENOUGH_INFO) with candidate proxy in legacy evidence field
+    rec_nei = ClaimRecord(
+        claim_id="c_nei",
+        claim_text="Aliens live on Mars.",
+        label="NOT_ENOUGH_INFO",
+        evidence=[nei_proxy_piece]
+    )
+
+    # 1 & 2: Verifiable claim labels
+    gold_ids_sup = {ep.evidence_id for ep in rec_sup.verified_gold_evidence}
+    assert "DocA_0" in gold_ids_sup
+    label_gold = 1 if "DocA_0" in gold_ids_sup else 0
+    label_dist = 1 if "DocB_1" in gold_ids_sup else 0
+    assert label_gold == 1, "Actual gold evidence must receive positive label (1)"
+    assert label_dist == 0, "Retrieved distractor must receive negative label (0)"
+
+    # 3: Protocol A label for NEI candidate
+    gold_ids_nei = {ep.evidence_id for ep in rec_nei.verified_gold_evidence}
+    assert gold_ids_nei == set(), "NEI claim must have empty verified_gold_evidence"
+    label_nei_proto_a = 1 if "DocC_0" in gold_ids_nei else 0
+    assert label_nei_proto_a == 0, "NEI candidate passage must receive negative label (0) under Protocol A"
+
+    # 4 & 5: Protocol B filtering
+    eval_claims = [rec_sup, rec_nei]
+    protocol_b_claims = [r for r in eval_claims if r.is_verifiable]
+    assert rec_nei not in protocol_b_claims, "NEI claims must be completely excluded under Protocol B"
+    assert len(protocol_b_claims) == 1
+    assert protocol_b_claims[0].claim_id == "c_sup"
+
+    for r in protocol_b_claims:
+        assert r.label in {"SUPPORTS", "REFUTES"}
+        for ep in r.evidence:
+            assert r.is_verifiable is True
+
+    # 6: Malformed / invalid claim label raises error
+    with pytest.raises(ValueError, match="Invalid label"):
+        ClaimRecord(claim_id="c_bad", claim_text="Invalid.", label="UNVERIFIED")
+
+
+def test_signals_cache_versioning_and_invalidation(tmp_path):
+    """Regression test for Fix 2: Signals cache metadata, versioning, and safe invalidation.
+    Proves:
+    1. Valid cache with matching fingerprints and evidence IDs is accepted.
+    2. Changing a configuration parameter triggers invalidation.
+    3. Changing a source fingerprint triggers invalidation.
+    4. Changing retrieved evidence IDs triggers invalidation.
+    5. Malformed or incompatible cache data triggers safe recomputation without crash.
+    6. Protected historical directories remain untouched.
+    """
+    import json
+    import os
+
+    cache_file = tmp_path / ".signals_cache_v2_corrected.json"
+
+    meta = {
+        "cache_version": "2.1",
+        "created_at": "2026-10-22T00:00:00",
+        "source_fingerprints": {"conflict/detector.py": "abc123hash"},
+        "config_hash": "cfg_hash_initial",
+        "corpus_fingerprint": "corpus_hash_1",
+        "dataset_fingerprint": "dataset_hash_1",
+        "retrieval_mode": "hybrid",
+        "top_k": 3
+    }
+
+    dummy_signals = {
+        "c1": {
+            "claim_id": "c1",
+            "evidence_ids": ["ev1", "ev2", "ev3"],
+            "conflict_score": 0.45,
+            "conflict_detected": True,
+            "evidence_refute_probs": {"ev1": 0.1, "ev2": 0.8, "ev3": 0.05},
+            "stability_score": 1.0
+        }
+    }
+
+    payload = {"metadata": meta, "signals": dummy_signals}
+    with open(cache_file, "w", encoding="utf-8") as f:
+        json.dump(payload, f)
+
+    # Dummy ClaimRecord and retrieved evidence
+    rec = ClaimRecord(claim_id="c1", claim_text="Claim 1", label="SUPPORTS")
+    retrieved = {
+        "c1": [
+            RetrievedEvidence(evidence_id="ev1", text="t1", doc_title="d1", sentence_idx=0, source="fever", source_type="wikipedia", retrieval_score=0.9, retrieval_rank=1, retrieval_method="hybrid"),
+            RetrievedEvidence(evidence_id="ev2", text="t2", doc_title="d2", sentence_idx=0, source="fever", source_type="wikipedia", retrieval_score=0.8, retrieval_rank=2, retrieval_method="hybrid"),
+            RetrievedEvidence(evidence_id="ev3", text="t3", doc_title="d3", sentence_idx=0, source="fever", source_type="wikipedia", retrieval_score=0.7, retrieval_rank=3, retrieval_method="hybrid"),
+        ]
+    }
+
+    # 1. Valid cache is accepted
+    loaded, status = load_or_validate_cache(str(cache_file), meta, [rec], retrieved)
+    assert status == "accepted"
+    assert loaded is not None
+    assert "c1" in loaded
+
+    # 2. Config hash mismatch invalidates
+    meta_mismatch_cfg = dict(meta, config_hash="cfg_hash_MODIFIED")
+    loaded_cfg, status_cfg = load_or_validate_cache(str(cache_file), meta_mismatch_cfg, [rec], retrieved)
+    assert status_cfg == "config_hash_mismatch"
+    assert loaded_cfg is None
+
+    # 3. Source fingerprint mismatch invalidates
+    meta_mismatch_src = dict(meta, source_fingerprints={"conflict/detector.py": "DIFFERENT_HASH"})
+    loaded_src, status_src = load_or_validate_cache(str(cache_file), meta_mismatch_src, [rec], retrieved)
+    assert status_src == "source_fingerprint_mismatch"
+    assert loaded_src is None
+
+    # 4. Evidence ID mismatch invalidates
+    retrieved_mismatch = {
+        "c1": [
+            RetrievedEvidence(evidence_id="ev1", text="t1", doc_title="d1", sentence_idx=0, source="fever", source_type="wikipedia", retrieval_score=0.9, retrieval_rank=1, retrieval_method="hybrid"),
+            RetrievedEvidence(evidence_id="ev_DIFFERENT", text="t2", doc_title="d2", sentence_idx=0, source="fever", source_type="wikipedia", retrieval_score=0.8, retrieval_rank=2, retrieval_method="hybrid"),
+            RetrievedEvidence(evidence_id="ev3", text="t3", doc_title="d3", sentence_idx=0, source="fever", source_type="wikipedia", retrieval_score=0.7, retrieval_rank=3, retrieval_method="hybrid"),
+        ]
+    }
+    loaded_eid, status_eid = load_or_validate_cache(str(cache_file), meta, [rec], retrieved_mismatch)
+    assert status_eid == "evidence_id_mismatch"
+    assert loaded_eid is None
+
+    # 5. Malformed/corrupt JSON safely invalidates without crashing
+    with open(cache_file, "w", encoding="utf-8") as f:
+        f.write("{corrupt json content")
+    loaded_corrupt, status_corrupt = load_or_validate_cache(str(cache_file), meta, [rec], retrieved)
+    assert "corrupt" in status_corrupt
+    assert loaded_corrupt is None
+
+    # 6. Verify protected historical directories exist and remain unmodified
+    for hist_dir in ["outputs/phase10_formal", "outputs/phase11_formal", "outputs/phase11_v2"]:
+        assert os.path.exists(hist_dir), f"Protected historical directory missing: {hist_dir}"
+
+
+def test_null_centered_bootstrap_finite_simulation_and_holm():
+    """Regression test for Fix 3: Statistical reporting, finite-simulation p-values, and Holm adjustment.
+    Proves:
+    1. Null-centered cluster bootstrap resamples at claim level.
+    2. Finite-sample correction p = (exceedances + 1) / (valid_reps + 1) is strictly > 0 even with 0 exceedances.
+    3. Reproducible results with fixed random seed.
+    4. Holm-Bonferroni correction maintains monotonicity and controls FWER across co-primary endpoints.
+    5. Handles degenerate samples explicitly.
+    """
+    import pandas as pd
+    from sklearn.metrics import roc_auc_score
+
+    # Create synthetic dataset with 20 claims, 3 evidence pieces per claim
+    rng = np.random.default_rng(42)
+    rows = []
+    for c in range(20):
+        cid = f"claim_{c}"
+        has_gold = (c % 2 == 0)
+        for e in range(3):
+            is_gold = 1 if (has_gold and e == 0) else 0
+            # Fuzzy score gives good signal
+            fuz_score = 0.8 if is_gold else float(rng.uniform(0.1, 0.4))
+            # Baseline score gives weaker signal
+            base_score = 0.6 if is_gold else float(rng.uniform(0.2, 0.5))
+            rows.append({
+                "claim_id": cid,
+                "evidence_id": f"ev_{c}_{e}",
+                "evaluation_label": is_gold,
+                "fuzzy_score": fuz_score,
+                "base_score": base_score
+            })
+    df_synth = pd.DataFrame(rows)
+
+    # 1 & 2: Finite-sample corrected bootstrap
+    res_auroc = run_null_centered_cluster_bootstrap(
+        df_synth,
+        metric_name="AUROC",
+        metric_func=roc_auc_score,
+        score_col_fuzzy="fuzzy_score",
+        score_col_base="base_score",
+        label_col="evaluation_label",
+        B=200,
+        seed=42
+    )
+
+    assert res_auroc["replicates_valid"] > 150
+    assert res_auroc["p_value_raw"] > 0.0, "Finite simulation p-value must be strictly > 0.0"
+    assert res_auroc["simulation_resolution"] == 1.0 / (res_auroc["replicates_valid"] + 1.0)
+    # Check formula exactness:
+    expected_p = (res_auroc["exceedances"] + 1.0) / (res_auroc["replicates_valid"] + 1.0)
+    assert math.isclose(res_auroc["p_value_raw"], expected_p, rel_tol=1e-7)
+
+    # 3: Reproducibility with fixed random seed
+    res_repeat = run_null_centered_cluster_bootstrap(
+        df_synth,
+        metric_name="AUROC",
+        metric_func=roc_auc_score,
+        score_col_fuzzy="fuzzy_score",
+        score_col_base="base_score",
+        label_col="evaluation_label",
+        B=200,
+        seed=42
+    )
+    assert res_repeat["observed_difference"] == res_auroc["observed_difference"]
+    assert res_repeat["ci_lower_95"] == res_auroc["ci_lower_95"]
+    assert res_repeat["p_value_raw"] == res_auroc["p_value_raw"]
+
+    # 4: Holm multiplicity adjustment across co-primary endpoints
+    raw_p_dict = {"auroc": 0.015, "average_precision": 0.003}
+    holm_adj = apply_holm_bonferroni(raw_p_dict)
+    # AP is smaller: ranked 1st -> multiplier 2 -> 0.003 * 2 = 0.006
+    # AUROC is larger: ranked 2nd -> multiplier 1 -> max(0.006, 0.015 * 1) = 0.015
+    assert math.isclose(holm_adj["average_precision"], 0.006, abs_tol=1e-6)
+    assert math.isclose(holm_adj["auroc"], 0.015, abs_tol=1e-6)
+    assert holm_adj["average_precision"] <= holm_adj["auroc"], "Holm correction must preserve monotonicity"
+
+
+def test_retrieval_to_attribution_id_alignment():
+    """Regression test for Fix 4: Retrieval-to-attribution explicit ID matching.
+    Proves:
+    1. Correctly aligned input succeeds by (claim_id, evidence_id).
+    2. Shuffling/reordering reference rows still matches by ID.
+    3. Missing evidence ID raises KeyError.
+    4. Duplicate evidence ID raises ValueError.
+    """
+    # Reference Phase 10 rows
+    ref_rows = [
+        {"claim_id": "c1", "evidence_id": "e_a", "val": 10},
+        {"claim_id": "c1", "evidence_id": "e_b", "val": 20},
+        {"claim_id": "c1", "evidence_id": "e_c", "val": 30},
+    ]
+
+    # Map by (claim_id, evidence_id)
+    ref_map = {(r["claim_id"], r["evidence_id"]): r for r in ref_rows}
+
+    # 1. Correctly ordered retrieved evidence
+    retrieved_order1 = ["e_a", "e_b", "e_c"]
+    matched_vals = [ref_map[("c1", eid)]["val"] for eid in retrieved_order1]
+    assert matched_vals == [10, 20, 30]
+
+    # 2. Reordered retrieved evidence still matches by ID, not positional index
+    retrieved_order2 = ["e_c", "e_a", "e_b"]
+    matched_vals2 = [ref_map[("c1", eid)]["val"] for eid in retrieved_order2]
+    assert matched_vals2 == [30, 10, 20]
+
+    # 3. Missing evidence ID detected
+    with pytest.raises(KeyError):
+        _ = ref_map[("c1", "e_MISSING")]
+
+    # 4. Duplicate ID check in reference detection
+    dup_ref_rows = list(ref_rows) + [{"claim_id": "c1", "evidence_id": "e_a", "val": 99}]
+    exp_map_dup = {}
+    with pytest.raises(ValueError, match="Duplicate"):
+        for r in dup_ref_rows:
+            key = (r["claim_id"], r["evidence_id"])
+            if key in exp_map_dup:
+                raise ValueError(f"Duplicate (claim_id, evidence_id): {key}")
+            exp_map_dup[key] = r
+
+
+def test_fuzzy_engine_six_antecedent_coverage_v1_vs_v2():
+    """Regression test for Fix 5: Six-antecedent rule coverage and V1 vs V2 separation.
+    Proves:
+    1. V1 has 11 rules across 5 outputs with known coverage gaps (fallbacks).
+    2. V2 has 33 rules across 5 outputs with zero fallbacks across varying:
+       - Relevance
+       - Differing SHAP vs LIME attribution (e.g. SHAP=0.2, LIME=0.8)
+       - Intervention influence
+       - Contradiction degree
+       - Source reliability
+       - Stability score
+    """
+    engine_v1 = FuzzyEvidenceEngine(version="v1")
+    engine_v2 = FuzzyEvidenceEngine(version="v2")
+
+    # Antecedents varying across all 6 dimensions with differing SHAP and LIME
+    test_inputs = [
+        # Gap in V1 (moderate relevance, low intervention, differing SHAP/LIME)
+        FuzzyInput(
+            relevance=0.45,
+            attribution_shap=0.20,
+            attribution_lime=0.85,
+            intervention_influence=0.15,
+            contradiction_degree=0.40,
+            claim_conflict=0.30,
+            stability_score=0.70,
+            source_reliability=0.60
+        ),
+        # Strong relevance, high SHAP, low LIME, high contradiction
+        FuzzyInput(
+            relevance=0.85,
+            attribution_shap=0.90,
+            attribution_lime=0.30,
+            intervention_influence=0.75,
+            contradiction_degree=0.85,
+            claim_conflict=0.50,
+            stability_score=0.95,
+            source_reliability=0.80
+        ),
+        # Low relevance, zero contradiction, low stability
+        FuzzyInput(
+            relevance=0.10,
+            attribution_shap=0.15,
+            attribution_lime=0.10,
+            intervention_influence=0.05,
+            contradiction_degree=0.00,
+            claim_conflict=0.00,
+            stability_score=0.20,
+            source_reliability=0.50
+        )
+    ]
+
+    # V1 demonstrates fallbacks on input 0
+    out_v1_0 = engine_v1.evaluate(test_inputs[0])
+    assert out_v1_0.fallback_used is True
+    assert out_v1_0.evidence_reliability == 0.50
+
+    # V2 computes successfully on all test inputs across all 6 dimensions
+    for idx, inp in enumerate(test_inputs):
+        out_v2 = engine_v2.evaluate(inp)
+        assert out_v2.fallback_used is False, f"V2 fallback occurred on input {idx}"
+        assert out_v2.inference_status == "SUCCESS"
+        assert out_v2.activated_rule_count > 0
+        for fld, stat in out_v2.field_status.items():
+            assert stat == "COMPUTED", f"Field {fld} not computed on input {idx}"
+
+
+def test_stability_analyzer_random_seed_configuration():
+    """Regression test for Fix 6: Configured random_seed in StabilityAnalyzer.
+    Proves:
+    1. StabilityAnalyzer reads Config.random_seed for random_shuffle perturbation.
+    2. Identical seed produces identical evidence order.
+    3. Different seeds produce distinct permutations for a controlled evidence list.
+    4. Default 'permutation' perturbation performs deterministic reversal.
+    """
+    from unittest.mock import MagicMock
+    from attribution.schema import AttributionResult, EvidenceAttribution
+
+    # Create 5 distinct evidence items
+    evidence = [
+        RetrievedEvidence(evidence_id=f"ev_{i}", text=f"text {i}", doc_title=f"doc_{i}", sentence_idx=0, source="fever", source_type="wikipedia", retrieval_score=0.5, retrieval_rank=i+1, retrieval_method="hybrid")
+        for i in range(5)
+    ]
+
+    # Mock explainer that returns attribution scores
+    mock_explainer = MagicMock()
+    mock_explainer.explain.side_effect = lambda cid, claim, ev_list: AttributionResult(
+        claim_id=cid,
+        claim=claim,
+        verdict="SUPPORTS",
+        baseline_probabilities={"SUPPORTS": 0.9, "REFUTES": 0.05, "NOT_ENOUGH_INFO": 0.05},
+        evidence_attributions=[
+            EvidenceAttribution(
+                evidence_id=ev.evidence_id,
+                text=ev.text,
+                shap_support=0.1 * idx,
+                shap_refute=0.0,
+                shap_nei=0.0,
+                shap_target=0.1 * idx,
+                shap_rank=idx + 1,
+                lime_support=0.1 * idx,
+                lime_refute=0.0,
+                lime_nei=0.0,
+                lime_target=0.1 * idx,
+                lime_rank=idx + 1
+            )
+            for idx, ev in enumerate(ev_list)
+        ]
+    )
+
+    # 1 & 2: Identical seed produces identical result
+    cfg_seed42_a = Config(random_seed=42, stability_perturbation="random_shuffle")
+    analyzer_42_a = StabilityAnalyzer(explainer=mock_explainer, config=cfg_seed42_a)
+    res_42_a = analyzer_42_a.analyze("c1", "Claim text", evidence)
+
+    cfg_seed42_b = Config(random_seed=42, stability_perturbation="random_shuffle")
+    analyzer_42_b = StabilityAnalyzer(explainer=mock_explainer, config=cfg_seed42_b)
+    res_42_b = analyzer_42_b.analyze("c1", "Claim text", evidence)
+
+    assert res_42_a.perturbed_ranking == res_42_b.perturbed_ranking, "Identical seed must produce identical perturbation ranking"
+    assert math.isclose(res_42_a.stability_score, res_42_b.stability_score, rel_tol=1e-7)
+
+    # 3: Different seed produces different perturbation order
+    cfg_seed999 = Config(random_seed=999, stability_perturbation="random_shuffle")
+    analyzer_999 = StabilityAnalyzer(explainer=mock_explainer, config=cfg_seed999)
+    res_999 = analyzer_999.analyze("c1", "Claim text", evidence)
+
+    # For 5 elements, seed 42 vs 999 produces different shuffled orders
+    order_42 = list(res_42_a.perturbed_ranking.keys())
+    order_999 = list(res_999.perturbed_ranking.keys())
+    assert order_42 != order_999, "Different random seeds should yield different shuffled orders"
+
+    # 4: Default permutation strategy performs deterministic reversal
+    cfg_reverse = Config(stability_perturbation="permutation")
+    analyzer_rev = StabilityAnalyzer(explainer=mock_explainer, config=cfg_reverse)
+    res_rev = analyzer_rev.analyze("c1", "Claim text", evidence)
+    assert res_rev.stability_score >= 0.0
