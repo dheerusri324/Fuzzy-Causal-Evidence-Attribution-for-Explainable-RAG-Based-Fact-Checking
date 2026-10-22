@@ -88,9 +88,14 @@ def get_git_provenance(project_root: Optional[str] = None) -> Dict[str, Any]:
     Returns a dictionary containing:
       - commit_sha: full 40-character SHA of HEAD, or None if unavailable
       - branch: current branch name or 'DETACHED_HEAD', or None
-      - working_tree_dirty: bool indicating whether tracked source files have uncommitted changes
+      - working_tree_dirty: bool indicating whether the working tree has any tracked modifications or untracked files
+      - has_tracked_modifications: bool indicating whether tracked source files have uncommitted changes
       - uncommitted_tracked_changes: list of tracked files modified or staged
-      - provenance_status: 'verified' (clean tracked files), 'dirty_working_tree', or 'git_unavailable'
+      - has_untracked_files: bool indicating whether untracked files exist in the working tree
+      - untracked_files: list of untracked files/directories
+      - provenance_status: 'verified' (clean repository), 'dirty_working_tree' (tracked source modifications),
+                           'untracked_files_present' (clean tracked source, but untracked files exist),
+                           or 'git_unavailable'
       - git_error: error string if Git commands failed, or None
     """
     import subprocess
@@ -102,7 +107,10 @@ def get_git_provenance(project_root: Optional[str] = None) -> Dict[str, Any]:
         "commit_sha": None,
         "branch": None,
         "working_tree_dirty": None,
+        "has_tracked_modifications": None,
         "uncommitted_tracked_changes": [],
+        "has_untracked_files": None,
+        "untracked_files": [],
         "provenance_status": "unverified",
         "git_error": None
     }
@@ -144,7 +152,7 @@ def get_git_provenance(project_root: Optional[str] = None) -> Dict[str, Any]:
         else:
             provenance["branch"] = "UNKNOWN"
 
-        # 3. Working tree dirty status
+        # 3. Working tree status (tracked modifications and untracked files)
         res_status = subprocess.run(
             ["git", "status", "--porcelain"],
             cwd=project_root,
@@ -155,12 +163,28 @@ def get_git_provenance(project_root: Optional[str] = None) -> Dict[str, Any]:
         if res_status.returncode == 0:
             status_lines = [line.rstrip() for line in res_status.stdout.splitlines() if line.strip()]
             tracked_changes = [line for line in status_lines if not line.startswith("??")]
-            is_dirty = len(tracked_changes) > 0
+            untracked_files = [line for line in status_lines if line.startswith("??")]
+
+            has_tracked = len(tracked_changes) > 0
+            has_untracked = len(untracked_files) > 0
+            is_dirty = len(status_lines) > 0
+
             provenance["working_tree_dirty"] = is_dirty
+            provenance["has_tracked_modifications"] = has_tracked
             provenance["uncommitted_tracked_changes"] = tracked_changes
-            provenance["provenance_status"] = "dirty_working_tree" if is_dirty else "verified"
+            provenance["has_untracked_files"] = has_untracked
+            provenance["untracked_files"] = untracked_files
+
+            if has_tracked:
+                provenance["provenance_status"] = "dirty_working_tree"
+            elif has_untracked:
+                provenance["provenance_status"] = "untracked_files_present"
+            else:
+                provenance["provenance_status"] = "verified"
         else:
             provenance["working_tree_dirty"] = True
+            provenance["has_tracked_modifications"] = None
+            provenance["has_untracked_files"] = None
             provenance["provenance_status"] = "status_check_failed"
 
     except Exception as exc:

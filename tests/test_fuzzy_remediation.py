@@ -839,13 +839,14 @@ def test_stability_analyzer_random_seed_configuration():
 
 
 def test_manifest_provenance_dynamic_mocked_git():
-    """Regression test: dynamic Git provenance resolution under clean, dirty, and error conditions."""
+    """Regression test: dynamic Git provenance resolution under clean, dirty, untracked, and error conditions."""
     from unittest.mock import patch, MagicMock
     from experiments.experiment2_v2 import get_git_provenance
 
-    # Case 1: Clean repository
     mock_res_sha = MagicMock(returncode=0, stdout="a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4\n", stderr="")
     mock_res_branch = MagicMock(returncode=0, stdout="feature/fuzzy-remediation\n", stderr="")
+
+    # Case 1: Clean repository (no tracked changes, no untracked files)
     mock_res_status_clean = MagicMock(returncode=0, stdout="", stderr="")
 
     def side_effect_clean(cmd, **kwargs):
@@ -862,8 +863,11 @@ def test_manifest_provenance_dynamic_mocked_git():
         assert prov_clean["commit_sha"] == "a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4"
         assert prov_clean["branch"] == "feature/fuzzy-remediation"
         assert prov_clean["working_tree_dirty"] is False
-        assert prov_clean["provenance_status"] == "verified"
+        assert prov_clean["has_tracked_modifications"] is False
         assert prov_clean["uncommitted_tracked_changes"] == []
+        assert prov_clean["has_untracked_files"] is False
+        assert prov_clean["untracked_files"] == []
+        assert prov_clean["provenance_status"] == "verified"
         assert prov_clean["git_error"] is None
 
     # Case 2: Dirty working tree (uncommitted tracked modifications)
@@ -887,8 +891,38 @@ def test_manifest_provenance_dynamic_mocked_git():
         assert prov_dirty["commit_sha"] == "a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4"
         assert prov_dirty["branch"] == "feature/fuzzy-remediation"
         assert prov_dirty["working_tree_dirty"] is True
+        assert prov_dirty["has_tracked_modifications"] is True
+        assert prov_dirty["uncommitted_tracked_changes"] == [" M experiments/experiment2_v2.py"]
+        assert prov_dirty["has_untracked_files"] is True
+        assert prov_dirty["untracked_files"] == ["?? untracked_file.txt"]
         assert prov_dirty["provenance_status"] == "dirty_working_tree"
-        assert " M experiments/experiment2_v2.py" in prov_dirty["uncommitted_tracked_changes"]
+
+    # Case 2b: Untracked-only files present (tracked files clean, but untracked files exist)
+    mock_res_status_untracked = MagicMock(
+        returncode=0,
+        stdout="?? outputs/phase11_v2_revalidation_91b8567/\n?? scratch/temp.txt\n",
+        stderr=""
+    )
+
+    def side_effect_untracked(cmd, **kwargs):
+        if cmd[1] == "rev-parse" and cmd[2] == "HEAD":
+            return mock_res_sha
+        elif cmd[1] == "rev-parse" and "--abbrev-ref" in cmd:
+            return mock_res_branch
+        elif cmd[1] == "status":
+            return mock_res_status_untracked
+        return MagicMock(returncode=0, stdout="", stderr="")
+
+    with patch("subprocess.run", side_effect=side_effect_untracked):
+        prov_untracked = get_git_provenance("/fake/dir")
+        assert prov_untracked["commit_sha"] == "a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4"
+        assert prov_untracked["working_tree_dirty"] is True  # Must NOT be reported as clean
+        assert prov_untracked["has_tracked_modifications"] is False
+        assert prov_untracked["uncommitted_tracked_changes"] == []
+        assert prov_untracked["has_untracked_files"] is True
+        assert len(prov_untracked["untracked_files"]) == 2
+        assert "?? outputs/phase11_v2_revalidation_91b8567/" in prov_untracked["untracked_files"]
+        assert prov_untracked["provenance_status"] == "untracked_files_present"
 
     # Case 3: Missing Git metadata (Git not installed / FileNotFoundError)
     with patch("subprocess.run", side_effect=FileNotFoundError("git binary not found")):
@@ -896,6 +930,8 @@ def test_manifest_provenance_dynamic_mocked_git():
         assert prov_err["commit_sha"] is None
         assert prov_err["branch"] is None
         assert prov_err["working_tree_dirty"] is None
+        assert prov_err["has_tracked_modifications"] is None
+        assert prov_err["has_untracked_files"] is None
         assert prov_err["provenance_status"] == "git_unavailable"
         assert "git binary not found" in prov_err["git_error"]
 
@@ -906,6 +942,19 @@ def test_manifest_provenance_dynamic_mocked_git():
         assert prov_not_git["commit_sha"] is None
         assert prov_not_git["provenance_status"] == "git_unavailable"
         assert "fatal: not a git repository" in prov_not_git["git_error"]
+
+    # Case 5: Branch-independent deterministic resolution across arbitrary branch names
+    for test_branch, expected_branch in [
+        ("main\n", "main"),
+        ("master\n", "master"),
+        ("fix/fuzzy-pipeline-v2\n", "fix/fuzzy-pipeline-v2"),
+        ("feature/arbitrary-branch-name\n", "feature/arbitrary-branch-name"),
+        ("HEAD\n", "DETACHED_HEAD"),
+    ]:
+        mock_branch_var = MagicMock(returncode=0, stdout=test_branch, stderr="")
+        with patch("subprocess.run", side_effect=lambda cmd, **kw: mock_branch_var if "--abbrev-ref" in cmd else (mock_res_sha if cmd[1] == "rev-parse" else mock_res_status_clean)):
+            res_b = get_git_provenance("/fake/dir")
+            assert res_b["branch"] == expected_branch
 
 
 def test_manifest_provenance_no_hardcoded_commit_and_config_fidelity():
@@ -964,7 +1013,7 @@ def test_manifest_provenance_no_hardcoded_commit_and_config_fidelity():
 
 
 def test_manifest_provenance_real_git_smoke_check():
-    """Integration smoke test: retrieves real Git metadata from local project working repository."""
+    """Integration smoke test: retrieves real Git metadata from local project working repository without assuming a specific branch name."""
     from experiments.experiment2_v2 import get_git_provenance
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -975,10 +1024,31 @@ def test_manifest_provenance_real_git_smoke_check():
     assert len(prov["commit_sha"]) == 40, f"Expected 40-char commit SHA, got {len(prov['commit_sha'])}"
     assert all(c in "0123456789abcdef" for c in prov["commit_sha"]), "Commit SHA must be lowercase hex"
 
-    # 2. Branch name
-    assert prov["branch"] in ["fix/fuzzy-pipeline-v2", "DETACHED_HEAD"], f"Unexpected branch: {prov['branch']}"
+    # 2. Branch name: sensible non-empty string, independent of branch name
+    assert isinstance(prov["branch"], str), "Branch must be a string"
+    assert len(prov["branch"]) > 0, "Branch must not be empty"
+    assert prov["branch"] != "UNKNOWN", f"Branch could not be resolved: {prov['branch']}"
+    assert not any(c.isspace() for c in prov["branch"]), f"Branch name cannot contain whitespace: {prov['branch']}"
 
-    # 3. Working tree dirty status is a boolean
+    # 3. Working tree status structure and boolean integrity
     assert isinstance(prov["working_tree_dirty"], bool), "working_tree_dirty must be a boolean"
-    assert prov["provenance_status"] in ["verified", "dirty_working_tree"]
+    assert isinstance(prov["has_tracked_modifications"], bool), "has_tracked_modifications must be a boolean"
+    assert isinstance(prov["has_untracked_files"], bool), "has_untracked_files must be a boolean"
+    assert isinstance(prov["uncommitted_tracked_changes"], list), "uncommitted_tracked_changes must be a list"
+    assert isinstance(prov["untracked_files"], list), "untracked_files must be a list"
     assert prov["git_error"] is None
+
+    # 4. Status consistency check based on actual working tree state
+    if prov["has_tracked_modifications"]:
+        assert prov["working_tree_dirty"] is True
+        assert prov["provenance_status"] == "dirty_working_tree"
+        assert len(prov["uncommitted_tracked_changes"]) > 0
+    elif prov["has_untracked_files"]:
+        assert prov["working_tree_dirty"] is True
+        assert prov["provenance_status"] == "untracked_files_present"
+        assert len(prov["untracked_files"]) > 0
+    else:
+        assert prov["working_tree_dirty"] is False
+        assert prov["provenance_status"] == "verified"
+        assert len(prov["uncommitted_tracked_changes"]) == 0
+        assert len(prov["untracked_files"]) == 0
