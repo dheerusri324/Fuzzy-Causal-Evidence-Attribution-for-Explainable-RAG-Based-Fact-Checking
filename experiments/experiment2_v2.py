@@ -72,13 +72,191 @@ def get_source_fingerprints(project_root: str) -> Dict[str, str]:
         "stability/analyzer.py",
         "fuzzy/engine.py",
         "attribution/explainer.py",
-        "fuzzy/baseline.py"
+        "fuzzy/baseline.py",
+        "experiments/experiment2_v2.py"
     ]
     fingerprints = {}
     for rel_path in critical_files:
         full_path = os.path.join(project_root, rel_path)
         fingerprints[rel_path] = compute_file_sha256(full_path)
     return fingerprints
+
+
+def get_git_provenance(project_root: Optional[str] = None) -> Dict[str, Any]:
+    """Retrieves live Git provenance metadata dynamically from the local repository.
+
+    Returns a dictionary containing:
+      - commit_sha: full 40-character SHA of HEAD, or None if unavailable
+      - branch: current branch name or 'DETACHED_HEAD', or None
+      - working_tree_dirty: bool indicating whether tracked source files have uncommitted changes
+      - uncommitted_tracked_changes: list of tracked files modified or staged
+      - provenance_status: 'verified' (clean tracked files), 'dirty_working_tree', or 'git_unavailable'
+      - git_error: error string if Git commands failed, or None
+    """
+    import subprocess
+
+    if project_root is None:
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+    provenance: Dict[str, Any] = {
+        "commit_sha": None,
+        "branch": None,
+        "working_tree_dirty": None,
+        "uncommitted_tracked_changes": [],
+        "provenance_status": "unverified",
+        "git_error": None
+    }
+
+    try:
+        # 1. Full commit SHA from HEAD
+        res_sha = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if res_sha.returncode != 0:
+            err = res_sha.stderr.strip() if res_sha.stderr else "git rev-parse HEAD failed"
+            provenance["git_error"] = err
+            provenance["provenance_status"] = "git_unavailable"
+            return provenance
+
+        commit_sha = res_sha.stdout.strip()
+        if not commit_sha:
+            provenance["git_error"] = "Empty commit SHA returned by git"
+            provenance["provenance_status"] = "git_unavailable"
+            return provenance
+
+        provenance["commit_sha"] = commit_sha
+
+        # 2. Branch name from HEAD
+        res_branch = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if res_branch.returncode == 0:
+            b_name = res_branch.stdout.strip()
+            provenance["branch"] = "DETACHED_HEAD" if b_name == "HEAD" else b_name
+        else:
+            provenance["branch"] = "UNKNOWN"
+
+        # 3. Working tree dirty status
+        res_status = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if res_status.returncode == 0:
+            status_lines = [line.rstrip() for line in res_status.stdout.splitlines() if line.strip()]
+            tracked_changes = [line for line in status_lines if not line.startswith("??")]
+            is_dirty = len(tracked_changes) > 0
+            provenance["working_tree_dirty"] = is_dirty
+            provenance["uncommitted_tracked_changes"] = tracked_changes
+            provenance["provenance_status"] = "dirty_working_tree" if is_dirty else "verified"
+        else:
+            provenance["working_tree_dirty"] = True
+            provenance["provenance_status"] = "status_check_failed"
+
+    except Exception as exc:
+        provenance["git_error"] = str(exc)
+        provenance["provenance_status"] = "git_unavailable"
+
+    return provenance
+
+
+def build_run_manifest(
+    project_root: str,
+    output_dir: str,
+    cfg_dict: Dict[str, Any],
+    source_fps: Dict[str, str],
+    dataset_fp: str,
+    corpus_fp: str,
+    t_start: float,
+    cache_status: str,
+    total_fallbacks_v2: int,
+    B: int,
+    seed: int,
+    t_end: Optional[float] = None
+) -> Dict[str, Any]:
+    """Constructs comprehensive execution run manifest with dynamic Git provenance."""
+    git_prov = get_git_provenance(project_root)
+    if t_end is None:
+        t_end = time.time()
+    return {
+        "manifest_version": "2.0",
+        "evaluation_name": "Phase 11 V2 Corrected Dual-Protocol Evaluation",
+        "timestamp_start": datetime.datetime.fromtimestamp(t_start).isoformat(),
+        "timestamp_completed": datetime.datetime.fromtimestamp(t_end).isoformat(),
+        "duration_seconds": round(t_end - t_start, 2),
+        "execution_environment": {
+            "python_version": sys.version,
+            "platform": sys.platform
+        },
+        "git_provenance": git_prov,
+        "source_code_fingerprints": source_fps,
+        "configuration": cfg_dict,
+        "input_artifacts": {
+            "dataset_fever_dev": {
+                "path": "data/fever_dev.jsonl",
+                "sha256": dataset_fp,
+                "claims_evaluated": 500
+            },
+            "evidence_corpus": {
+                "path": "data/evidence_corpus.json",
+                "sha256": corpus_fp,
+                "passages_count": 808
+            },
+            "phase10_reference": {
+                "path": "outputs/phase10_formal/results.csv",
+                "sha256": compute_file_sha256(os.path.join(project_root, "outputs/phase10_formal/results.csv")),
+                "rows_count": 1500
+            }
+        },
+        "feature_provenance": {
+            "attribution_features": {
+                "source": "outputs/phase10_formal/results.csv",
+                "status": "frozen_controlled",
+                "rationale": "Controlled comparison against Phase 10 frozen inputs; DeBERTa NLI SHAP/LIME recomputation requires extensive CPU runtime"
+            },
+            "intervention_influence": {
+                "source": "outputs/phase10_formal/results.csv",
+                "status": "frozen_controlled"
+            },
+            "conflict_score_dynamic": {
+                "source": "ConflictDetector (continuous harmonic mean)",
+                "status": "recomputed_harmonic_mean",
+                "cache_status": cache_status
+            },
+            "stability_score_dynamic": {
+                "source": "outputs/phase11_formal/.signals_cache.json",
+                "status": "frozen_historical_controlled",
+                "rationale": "Historical stability scores preserved for controlled ablation comparison; full explainer re-run takes >50 min on CPU"
+            },
+            "fuzzy_engine": {
+                "source": "FuzzyEvidenceEngine (v2)",
+                "rules_count": 33,
+                "status": "live_v2_remediated",
+                "fallbacks_observed": total_fallbacks_v2
+            },
+            "baseline_scoring": {
+                "source": "compute_baseline_score",
+                "status": "live_linear_baseline"
+            }
+        },
+        "statistical_protocol": {
+            "method": "Null-Centered Paired Claim-Level Cluster Bootstrap",
+            "replicates_requested": B,
+            "random_seed": seed,
+            "finite_simulation_correction": "p = (exceedances + 1) / (valid_replicates + 1)",
+            "multiplicity_adjustment": "Holm-Bonferroni step-down per protocol family"
+        }
+    }
 
 
 def compute_within_claim_ranks(records: List[Dict[str, Any]], score_col: str) -> List[int]:
@@ -815,80 +993,20 @@ def run_formal_experiment_2_v2(
         json.dump(metrics_summary, f, indent=2)
     print(f"[PASS] Saved corrected evaluation metrics to: {metrics_json_path}")
 
-    # 5. Save Run Manifest (Fix 9)
-    run_manifest = {
-        "manifest_version": "1.0",
-        "evaluation_name": "Phase 11 V2 Corrected Dual-Protocol Evaluation",
-        "timestamp_start": datetime.datetime.fromtimestamp(t_start).isoformat(),
-        "timestamp_completed": datetime.datetime.now().isoformat(),
-        "duration_seconds": round(time.time() - t_start, 2),
-        "execution_environment": {
-            "python_version": sys.version,
-            "platform": sys.platform
-        },
-        "git_provenance": {
-            "branch": "fix/fuzzy-pipeline-v2",
-            "base_commit": "58d4180",
-            "status": "working_tree_evaluated"
-        },
-        "source_code_fingerprints": source_fps,
-        "configuration": cfg_dict,
-        "input_artifacts": {
-            "dataset_fever_dev": {
-                "path": "data/fever_dev.jsonl",
-                "sha256": dataset_fp,
-                "claims_evaluated": 500
-            },
-            "evidence_corpus": {
-                "path": "data/evidence_corpus.json",
-                "sha256": corpus_fp,
-                "passages_count": 808
-            },
-            "phase10_reference": {
-                "path": "outputs/phase10_formal/results.csv",
-                "sha256": compute_file_sha256(os.path.join(project_root, "outputs/phase10_formal/results.csv")),
-                "rows_count": 1500
-            }
-        },
-        "feature_provenance": {
-            "attribution_features": {
-                "source": "outputs/phase10_formal/results.csv",
-                "status": "frozen_controlled",
-                "rationale": "Controlled comparison against Phase 10 frozen inputs; DeBERTa NLI SHAP/LIME recomputation requires extensive CPU runtime"
-            },
-            "intervention_influence": {
-                "source": "outputs/phase10_formal/results.csv",
-                "status": "frozen_controlled"
-            },
-            "conflict_score_dynamic": {
-                "source": "ConflictDetector (continuous harmonic mean)",
-                "status": "recomputed_harmonic_mean",
-                "cache_status": cache_status
-            },
-            "stability_score_dynamic": {
-                "source": "outputs/phase11_formal/.signals_cache.json",
-                "status": "frozen_historical_controlled",
-                "rationale": "Historical stability scores preserved for controlled ablation comparison; full explainer re-run takes >50 min on CPU"
-            },
-            "fuzzy_engine": {
-                "source": "FuzzyEvidenceEngine (v2)",
-                "rules_count": 33,
-                "status": "live_v2_remediated",
-                "fallbacks_observed": total_fallbacks_v2
-            },
-            "baseline_scoring": {
-                "source": "compute_baseline_score",
-                "status": "live_linear_baseline"
-            }
-        },
-        "statistical_protocol": {
-            "method": "Null-Centered Paired Claim-Level Cluster Bootstrap",
-            "replicates_requested": B,
-            "random_seed": seed,
-            "finite_simulation_correction": "p = (exceedances + 1) / (valid_replicates + 1)",
-            "multiplicity_adjustment": "Holm-Bonferroni step-down per protocol family"
-        }
-    }
+    # 5. Save Run Manifest (Fix 9 & Dynamic Provenance)
+    run_manifest = build_run_manifest(
+        project_root=project_root,
+        output_dir=output_dir,
+        cfg_dict=cfg_dict,
+        source_fps=source_fps,
+        dataset_fp=dataset_fp,
+        corpus_fp=corpus_fp,
+        t_start=t_start,
+        cache_status=cache_status,
+        total_fallbacks_v2=total_fallbacks_v2,
+        B=B,
+        seed=seed
+    )
 
     manifest_path = os.path.join(output_dir, "run_manifest.json")
     with open(manifest_path, "w", encoding="utf-8") as f:

@@ -10,6 +10,7 @@ Covers:
 6. Decoupled passage contradiction vs claim conflict (Lincoln distractor regression).
 """
 
+import os
 import math
 import numpy as np
 import pytest
@@ -835,3 +836,149 @@ def test_stability_analyzer_random_seed_configuration():
     analyzer_rev = StabilityAnalyzer(explainer=mock_explainer, config=cfg_reverse)
     res_rev = analyzer_rev.analyze("c1", "Claim text", evidence)
     assert res_rev.stability_score >= 0.0
+
+
+def test_manifest_provenance_dynamic_mocked_git():
+    """Regression test: dynamic Git provenance resolution under clean, dirty, and error conditions."""
+    from unittest.mock import patch, MagicMock
+    from experiments.experiment2_v2 import get_git_provenance
+
+    # Case 1: Clean repository
+    mock_res_sha = MagicMock(returncode=0, stdout="a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4\n", stderr="")
+    mock_res_branch = MagicMock(returncode=0, stdout="feature/fuzzy-remediation\n", stderr="")
+    mock_res_status_clean = MagicMock(returncode=0, stdout="", stderr="")
+
+    def side_effect_clean(cmd, **kwargs):
+        if cmd[1] == "rev-parse" and cmd[2] == "HEAD":
+            return mock_res_sha
+        elif cmd[1] == "rev-parse" and "--abbrev-ref" in cmd:
+            return mock_res_branch
+        elif cmd[1] == "status":
+            return mock_res_status_clean
+        return MagicMock(returncode=0, stdout="", stderr="")
+
+    with patch("subprocess.run", side_effect=side_effect_clean):
+        prov_clean = get_git_provenance("/fake/dir")
+        assert prov_clean["commit_sha"] == "a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4"
+        assert prov_clean["branch"] == "feature/fuzzy-remediation"
+        assert prov_clean["working_tree_dirty"] is False
+        assert prov_clean["provenance_status"] == "verified"
+        assert prov_clean["uncommitted_tracked_changes"] == []
+        assert prov_clean["git_error"] is None
+
+    # Case 2: Dirty working tree (uncommitted tracked modifications)
+    mock_res_status_dirty = MagicMock(
+        returncode=0,
+        stdout=" M experiments/experiment2_v2.py\n?? untracked_file.txt\n",
+        stderr=""
+    )
+
+    def side_effect_dirty(cmd, **kwargs):
+        if cmd[1] == "rev-parse" and cmd[2] == "HEAD":
+            return mock_res_sha
+        elif cmd[1] == "rev-parse" and "--abbrev-ref" in cmd:
+            return mock_res_branch
+        elif cmd[1] == "status":
+            return mock_res_status_dirty
+        return MagicMock(returncode=0, stdout="", stderr="")
+
+    with patch("subprocess.run", side_effect=side_effect_dirty):
+        prov_dirty = get_git_provenance("/fake/dir")
+        assert prov_dirty["commit_sha"] == "a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4"
+        assert prov_dirty["branch"] == "feature/fuzzy-remediation"
+        assert prov_dirty["working_tree_dirty"] is True
+        assert prov_dirty["provenance_status"] == "dirty_working_tree"
+        assert " M experiments/experiment2_v2.py" in prov_dirty["uncommitted_tracked_changes"]
+
+    # Case 3: Missing Git metadata (Git not installed / FileNotFoundError)
+    with patch("subprocess.run", side_effect=FileNotFoundError("git binary not found")):
+        prov_err = get_git_provenance("/fake/dir")
+        assert prov_err["commit_sha"] is None
+        assert prov_err["branch"] is None
+        assert prov_err["working_tree_dirty"] is None
+        assert prov_err["provenance_status"] == "git_unavailable"
+        assert "git binary not found" in prov_err["git_error"]
+
+    # Case 4: Non-zero exit code (not a git repository)
+    mock_res_not_git = MagicMock(returncode=128, stdout="", stderr="fatal: not a git repository")
+    with patch("subprocess.run", return_value=mock_res_not_git):
+        prov_not_git = get_git_provenance("/fake/dir")
+        assert prov_not_git["commit_sha"] is None
+        assert prov_not_git["provenance_status"] == "git_unavailable"
+        assert "fatal: not a git repository" in prov_not_git["git_error"]
+
+
+def test_manifest_provenance_no_hardcoded_commit_and_config_fidelity():
+    """Regression test: verifies absence of hardcoded commit 58d4180, source fingerprint accuracy, and configuration fidelity."""
+    import inspect
+    import experiments.experiment2_v2 as exp2
+    from experiments.experiment2_v2 import build_run_manifest, get_source_fingerprints, compute_file_sha256
+
+    # 1. Verify code does not contain hardcoded commit '58d4180'
+    source_text = inspect.getsource(exp2)
+    assert "58d4180" not in source_text, "Source code must not hardcode legacy commit '58d4180'"
+
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+    # 2. Source fingerprints match actual file contents
+    fps = get_source_fingerprints(project_root)
+    assert "experiments/experiment2_v2.py" in fps
+    assert "conflict/detector.py" in fps
+    assert "stability/analyzer.py" in fps
+    assert "fuzzy/engine.py" in fps
+
+    exp2_path = os.path.join(project_root, "experiments/experiment2_v2.py")
+    expected_exp2_hash = compute_file_sha256(exp2_path)
+    assert fps["experiments/experiment2_v2.py"] == expected_exp2_hash
+    assert len(fps["experiments/experiment2_v2.py"]) == 64
+
+    # 3. Configuration fidelity in manifest builder
+    test_cfg = {
+        "top_k": 3,
+        "retrieval_mode": "hybrid",
+        "hybrid_fusion_method": "legacy",
+        "conflict_score_method": "harmonic_mean",
+        "random_seed": 42
+    }
+    manifest = build_run_manifest(
+        project_root=project_root,
+        output_dir="outputs/test_manifest",
+        cfg_dict=test_cfg,
+        source_fps=fps,
+        dataset_fp="dummy_dataset_fp",
+        corpus_fp="dummy_corpus_fp",
+        t_start=1000.0,
+        cache_status="accepted",
+        total_fallbacks_v2=0,
+        B=1000,
+        seed=42,
+        t_end=1005.5
+    )
+
+    assert manifest["manifest_version"] == "2.0"
+    assert manifest["configuration"] == test_cfg
+    assert manifest["duration_seconds"] == 5.5
+    assert manifest["source_code_fingerprints"] == fps
+    assert manifest["git_provenance"]["commit_sha"] is not None
+    assert manifest["feature_provenance"]["fuzzy_engine"]["fallbacks_observed"] == 0
+
+
+def test_manifest_provenance_real_git_smoke_check():
+    """Integration smoke test: retrieves real Git metadata from local project working repository."""
+    from experiments.experiment2_v2 import get_git_provenance
+
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    prov = get_git_provenance(project_root)
+
+    # 1. Valid commit SHA (40-char hex string)
+    assert prov["commit_sha"] is not None, "Real Git environment must return a commit SHA"
+    assert len(prov["commit_sha"]) == 40, f"Expected 40-char commit SHA, got {len(prov['commit_sha'])}"
+    assert all(c in "0123456789abcdef" for c in prov["commit_sha"]), "Commit SHA must be lowercase hex"
+
+    # 2. Branch name
+    assert prov["branch"] in ["fix/fuzzy-pipeline-v2", "DETACHED_HEAD"], f"Unexpected branch: {prov['branch']}"
+
+    # 3. Working tree dirty status is a boolean
+    assert isinstance(prov["working_tree_dirty"], bool), "working_tree_dirty must be a boolean"
+    assert prov["provenance_status"] in ["verified", "dirty_working_tree"]
+    assert prov["git_error"] is None
