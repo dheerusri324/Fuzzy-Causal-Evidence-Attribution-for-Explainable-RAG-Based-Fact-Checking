@@ -1,5 +1,15 @@
 # Phase 11 — Experiment 2 Design and Methodology Audit
 
+> [!IMPORTANT]
+> **Errata & Label-Semantics Notice (Post-Phase-13 Review)**:
+> - **Proxy-Label Scheme Demarcation**: The 443 positive instances evaluated in the official frozen Experiment 2 run represent a legacy proxy-label scheme consisting of **296 genuine human-annotated gold evidence passages** (154 for `SUPPORTS` and 142 for `REFUTES`) and **147 unannotated candidate proxy passages** associated with `NOT_ENOUGH_INFO` (NEI) claims from `copenlu/fever_gold_evidence`. In the FEVER benchmark, NEI claims have no human-annotated gold evidence.
+> - **Sensitivity Protocol Findings**: Full sensitivity audits isolating this distinction are documented in [`DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md`](DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md) and [`PRE_PHASE_14_AUDIT_ERRATA_V4.md`](PRE_PHASE_14_AUDIT_ERRATA_V4.md):
+>   - *Protocol A (500 claims; NEI candidate passages treated as negative distractors)*: $\text{AUROC}_{\text{fuzzy}} = 0.7386$ vs. $\text{AUROC}_{\text{base}} = 0.6488$ ($\Delta = +0.0898$, $p_{\text{Holm}} = 0.0020$).
+>   - *Protocol B (334 verifiable claims; NEI claims excluded entirely)*: $\text{AUROC}_{\text{fuzzy}} = 0.7777$ vs. $\text{AUROC}_{\text{base}} = 0.6949$ ($\Delta = +0.0827$, $p_{\text{Holm}} = 0.0020$).
+> - **Corrected Foundation Reference Citation**: The base paper citation is: Jean-Flavien Bussotti, Andrea Baraldi, Francesco Guerra, and Paolo Papotti, *"Explaining the Role of Evidence in Data-Driven Fact-Checking,"* *IEEE Access*, vol. 14, pp. 127752–127765, 2026, DOI: [10.1109/ACCESS.2026.3719082](https://doi.org/10.1109/ACCESS.2026.3719082).
+
+---
+
 ## Executive Summary
 
 This report establishes the finalized, audited research design, mathematical formalization, and statistical inference protocol for **Experiment 2**, which evaluates:

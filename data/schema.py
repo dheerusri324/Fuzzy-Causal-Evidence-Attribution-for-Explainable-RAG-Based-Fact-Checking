@@ -54,6 +54,19 @@ class ClaimRecord:
                 f"Invalid label '{self.label}'. Must be one of {VALID_LABELS}"
             )
 
+    @property
+    def is_verifiable(self) -> bool:
+        """Returns True if the claim is SUPPORTS or REFUTES (i.e. verifiable with human gold evidence)."""
+        return self.label in {"SUPPORTS", "REFUTES"}
+
+    @property
+    def verified_gold_evidence(self) -> List[EvidencePiece]:
+        """Returns genuine human-annotated gold evidence pieces.
+        For NOT_ENOUGH_INFO claims, returns an empty list because NEI claims are unverified
+        and have no human-annotated gold evidence in the FEVER benchmark.
+        """
+        return self.evidence if self.is_verifiable else []
+
     def to_dict(self) -> dict:
         d = asdict(self)
         return d

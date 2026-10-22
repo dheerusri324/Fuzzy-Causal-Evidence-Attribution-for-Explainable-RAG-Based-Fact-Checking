@@ -3,7 +3,8 @@ Schemas for Phase 7 Fuzzy Evidence Reasoning module.
 """
 
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Optional, Dict, List
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -16,8 +17,9 @@ class FuzzyInput:
     attribution_lime: float
     intervention_influence: float
     
-    # Placeholders for future phases
+    # Optional / contextual signals
     contradiction_degree: float = 0.0
+    claim_conflict: float = 0.0
     source_reliability: float = 0.75  # Wikipedia default
     stability_score: float = 1.0
 
@@ -30,6 +32,14 @@ class FuzzyOutput:
     support_degree: float
     contradiction_degree: float
     explanation_confidence: float
+
+    # Field-level status & transparency metadata
+    field_status: Dict[str, str] = field(default_factory=dict)
+    inference_status: str = "SUCCESS"  # "SUCCESS", "PARTIAL_FALLBACK", "TOTAL_FALLBACK", "ERROR"
+    fallback_used: bool = False
+    activated_rule_count: int = 0
+    activated_rules: List[int] = field(default_factory=list)
+    missing_fields: List[str] = field(default_factory=list)
 
 
 @dataclass

@@ -90,11 +90,19 @@ if run_button and claim_input.strip():
     for ev_res in res.evidence_results:
         with st.expander(f"Fuzzy Metrics for: {ev_res.evidence.evidence_id}"):
             fuz = ev_res.fuzzy_output
-            st.write(f"- **Evidence Reliability:** {fuz.evidence_reliability:.4f}")
-            st.write(f"- **Evidence Relevance:** {fuz.evidence_relevance:.4f}")
-            st.write(f"- **Support Degree:** {fuz.support_degree:.4f}")
-            st.write(f"- **Contradiction Degree:** {fuz.contradiction_degree:.4f}")
-            st.write(f"- **Explanation Confidence:** {fuz.explanation_confidence:.4f}")
+            def fmt_metric(name: str, val: float, key: str) -> str:
+                status = fuz.field_status.get(key, "COMPUTED")
+                if status != "COMPUTED":
+                    return f"- **{name}:** {val:.4f} *(Default Fallback — No active rules)*"
+                return f"- **{name}:** {val:.4f}"
+
+            st.write(fmt_metric("Evidence Reliability", fuz.evidence_reliability, "evidence_reliability"))
+            st.write(fmt_metric("Evidence Relevance", fuz.evidence_relevance, "evidence_relevance"))
+            st.write(fmt_metric("Support Degree", fuz.support_degree, "support_degree"))
+            st.write(fmt_metric("Contradiction Degree", fuz.contradiction_degree, "contradiction_degree"))
+            st.write(fmt_metric("Explanation Confidence", fuz.explanation_confidence, "explanation_confidence"))
+            if fuz.fallback_used:
+                st.caption(f"Inference Status: {fuz.inference_status} (Rules activated: {fuz.activated_rule_count})")
             
     # 8. Final Natural-Language Summary
     st.header("Final Natural-Language Explanation")

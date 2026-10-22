@@ -10,8 +10,9 @@ import json
 from pathlib import Path
 from typing import List, Optional
 
+import numpy as np
 from retrieval.schema import RetrievedEvidence
-from retrieval.bm25 import BM25Index
+from retrieval.bm25 import BM25Index, _tokenize
 from retrieval.dense import DenseIndex
 from config.settings import Config
 from utils.logging_setup import get_logger
@@ -138,22 +139,68 @@ class EvidenceRetriever:
     def _retrieve_hybrid(
         self, claim: str, top_k: int, alpha: float
     ) -> List[RetrievedEvidence]:
-        # Fetch more candidates from each method for better fusion
+        fusion_method = getattr(self.config, "hybrid_fusion_method", "pool_union")
+
+        if fusion_method == "legacy":
+            # Exact historical Phase 10 baseline fusion for backwards compatibility
+            n_candidates = min(top_k * 3, len(self.corpus))
+            bm25_raw = self.bm25.search(claim, n_candidates)
+            dense_raw = self.dense.search(claim, n_candidates)
+            bm25_norm = self._normalize_scores(bm25_raw)
+            dense_norm = self._normalize_scores(dense_raw)
+            combined = {}
+            for idx, score in bm25_norm:
+                combined[idx] = alpha * score
+            for idx, score in dense_norm:
+                combined[idx] = combined.get(idx, 0.0) + (1.0 - alpha) * score
+            sorted_results = sorted(combined.items(), key=lambda x: x[1], reverse=True)[:top_k]
+            return self._format_results(sorted_results, "hybrid")
+
+        # Fetch candidate pool from both methods (v2 remediated fusion)
         n_candidates = min(top_k * 3, len(self.corpus))
 
         bm25_raw = self.bm25.search(claim, n_candidates)
         dense_raw = self.dense.search(claim, n_candidates)
 
-        # Normalize each set of scores to [0, 1]
-        bm25_norm = self._normalize_scores(bm25_raw)
-        dense_norm = self._normalize_scores(dense_raw)
+        # Build union of unique candidate indices
+        candidate_indices = []
+        seen = set()
+        for idx, _ in bm25_raw + dense_raw:
+            if idx not in seen:
+                seen.add(idx)
+                candidate_indices.append(idx)
+
+        if not candidate_indices:
+            return []
+
+        # Get genuine BM25 scores for all candidates in the candidate pool
+        tokenized_query = _tokenize(claim)
+        all_bm25_scores = self.bm25._index.get_scores(tokenized_query)
+        bm25_cand_raw = [(idx, float(all_bm25_scores[idx])) for idx in candidate_indices]
+
+        # Get genuine dense cosine similarities for all candidates in the candidate pool
+        dense_dict = dict(dense_raw)
+        missing_dense = [idx for idx in candidate_indices if idx not in dense_dict]
+        if missing_dense and getattr(self.dense, "embeddings", None) is not None:
+            self.dense._load_model()
+            q_emb = self.dense._model.encode([claim], normalize_embeddings=True).astype(np.float32)
+            sub_emb = self.dense.embeddings[missing_dense]
+            missing_scores = np.dot(sub_emb, q_emb[0])
+            for idx, sc in zip(missing_dense, missing_scores):
+                dense_dict[idx] = float(sc)
+
+        dense_cand_raw = [(idx, dense_dict.get(idx, 0.0)) for idx in candidate_indices]
+
+        # Normalize each set of scores across the candidate pool to [0, 1]
+        bm25_norm_dict = dict(self._normalize_scores(bm25_cand_raw))
+        dense_norm_dict = dict(self._normalize_scores(dense_cand_raw))
 
         # Weighted fusion
         combined: dict[int, float] = {}
-        for idx, score in bm25_norm:
-            combined[idx] = alpha * score
-        for idx, score in dense_norm:
-            combined[idx] = combined.get(idx, 0.0) + (1.0 - alpha) * score
+        for idx in candidate_indices:
+            b_sc = bm25_norm_dict.get(idx, 0.0)
+            d_sc = dense_norm_dict.get(idx, 0.0)
+            combined[idx] = alpha * b_sc + (1.0 - alpha) * d_sc
 
         # Sort descending, take top-k
         sorted_results = sorted(

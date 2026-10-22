@@ -53,7 +53,7 @@ This project directly investigates and extends the research questions and empiri
 > **Reference Study:**  
 > Jean-Flavien Bussotti, Andrea Baraldi, Francesco Guerra, and Paolo Papotti.  
 > *"Explaining the Role of Evidence in Data-Driven Fact-Checking."*  
-> *IEEE Access*, vol. 12, pp. 37190–37204, 2026.  
+> *IEEE Access*, vol. 14, pp. 127752–127765, 2026.<br>
 > DOI: [10.1109/ACCESS.2026.3719082](https://doi.org/10.1109/ACCESS.2026.3719082)
 
 ### Confirmed Gaps Addressed
@@ -82,7 +82,7 @@ Attribution    Influence ΔP & Verdict Flips    Contradiction (NLI) & Stability 
   └──────────────┼──────────────────────────────┘
                  ▼
   [Mamdani Fuzzy Evidence Reasoning Engine]
-   (11 Rules across 5 Input Signals, Centroid Defuzzification)
+   (V1 Baseline: 11 Rules; V2 Remediated: 33 Rules across 5 Output Variables, Centroid Defuzzification)
                  │
                  ▼
   [Reliability-Aware Output & Interactive Streamlit Dashboard]
@@ -112,9 +112,11 @@ Attribution    Influence ΔP & Verdict Flips    Contradiction (NLI) & Stability 
 - **Explanation Stability ($s_{\text{stab}}$)**: Evaluates ranking stability by adding Gaussian noise ($\sigma = 0.05$) to dense passage embeddings and calculating the mean Spearman rank correlation across 5 perturbed runs.
 
 ### 4.5 Mamdani Fuzzy Evidence Reasoning Engine
-- **Inputs**: Relevance ($r_i$), Post-hoc Attribution ($a_i$), Intervention Influence ($\Delta P_i$), Contradiction Degree ($c_{\text{deg}}$), Explanation Stability ($s_{\text{stab}}$).
+- **Inputs**: Relevance ($r_i$), Post-hoc Attribution ($a_i$), Intervention Influence ($\Delta P_i$), Contradiction Degree ($c_{\text{deg}}$), Explanation Stability ($s_{\text{stab}}$), Source Reliability ($s_i$).
 - **Fuzzy Sets**: Low, Medium, High triangular and trapezoidal membership functions.
-- **Rule Base**: 11 Mamdani inference rules modeling non-linear interactions (e.g., dampening relevance when contradiction is high unless intervention influence is decisive).
+- **Rule Base**:
+  - *V1 Baseline Engine*: 11 Mamdani inference rules across 5 outputs (8 primary domain synergy rules + 3 baseline passthrough rules).
+  - *V2 Remediated Engine*: 33 partitioned rules ensuring 100% computed input-space coverage without dead zones (3 relevance + 5 contradiction + 7 support + 10 reliability + 8 confidence).
 - **Defuzzification**: Centroid (Center of Gravity) defuzzification yielding continuous evidence reliability scores in $[0, 1]$.
 - *Note on Terminology*: The resulting score is a calibrated operational proxy for evidence utility; it is not a formal Bayesian probability of truth.
 
@@ -144,9 +146,10 @@ All formal experiment directories and documentation retain their explicit phase 
 │   └── run_all.py                       # Master experiment execution wrapper
 ├── fuzzy/                              # Mamdani fuzzy logic engine, membership & rules
 ├── intervention/                        # Counterfactual intervention & leave-one-out tests
-├── outputs/                             # Frozen formal experimental outputs & plots
+├── outputs/                             # Formal experimental outputs & plots
 │   ├── phase10_formal/                  # Experiment 1 frozen results (results.csv, config.json)
 │   ├── phase11_formal/                  # Experiment 2 frozen results & .signals_cache.json
+│   ├── phase11_v2/                      # Intermediate hybrid evaluation (V2 fuzzy engine on frozen Phase 10 attributions & Phase 11 stability)
 │   ├── phase12_analysis/                # Cross-experiment comparative tables & audit JSON
 │   ├── phase10_sanity/                  # Phase 10 preliminary sanity check artifacts
 │   └── sensitivity_nei_label_audit/     # NEI label semantics sensitivity audit outputs
@@ -155,7 +158,7 @@ All formal experiment directories and documentation retain their explicit phase 
 ├── tests/                               # 11 unit & regression test suites (pytest)
 ├── utils/                               # Reproducibility, logging, and mathematical utilities
 ├── verification/                        # Cross-encoder claim-evidence verifier (NLI)
-├── audit_bundle/                        # Historical pre-Phase-14 audit assets & manifests
+├── audit_bundle/                        # Archived historical audit snapshot (2026-10-20; sealed by integrity_manifest.json)
 ├── supplemental_audit/                  # Supplemental audit bundle
 ├── sensitivity_audit_sourcepack/        # NEI label semantics sourcepack
 ├── scratch/                             # Auxiliary validation and verification scripts
@@ -176,6 +179,9 @@ All formal experiment directories and documentation retain their explicit phase 
 └── Fuzzy_Causal_Fact_Checking_Proposal_V2.pptx # 6-slide proposal presentation
 ```
 
+> [!NOTE]
+> **Archival Snapshot Notice (`audit_bundle/`)**: The `audit_bundle/` directory represents a frozen historical snapshot from 2026-10-20, cryptographically sealed via SHA-256 hashes in `audit_bundle/integrity_manifest.json`. Files within `audit_bundle/artifacts/` are deliberately preserved in their original state to maintain audit reproducibility. For authoritative errata, corrected citation metadata, and sensitivity evaluations, refer to the root documentation (`README.md`, `PRE_PHASE_14_AUDIT_ERRATA_V4.md`, and `DATASET_LABEL_SEMANTICS_SENSITIVITY_AUDIT.md`).
+
 ---
 
 ## 6. Dataset Sources, Sampling & Provenance
@@ -183,7 +189,9 @@ All formal experiment directories and documentation retain their explicit phase 
 The evaluation corpus is constructed via [`data/fever_loader.py`](data/fever_loader.py) using the Hugging Face `copenlu/fever_gold_evidence` repository:
 - **Sampling Protocol**: Streamed up to the first 5,000 records from `split="train"`. Balanced random sampling selected exactly 250 records per label (`SUPPORTS`, `REFUTES`, `NOT_ENOUGH_INFO`) using random seed `42` ($N = 750$).
 - **Local Split Labeling**: The resulting 750-record sample is stored as [`data/fever_dev.jsonl`](data/fever_dev.jsonl). The first 500 records form the frozen evaluation cohort.
-- **Closed Candidate Pool**: All human-annotated gold evidence passages from the sampled claims were extracted to form a closed candidate pool of **808 unique Wikipedia passages** stored in [`data/evidence_corpus.json`](data/evidence_corpus.json).
+- **Cohort Composition**: The evaluated 500-claim cohort is near-balanced across all three classes: **168 SUPPORTS**, **166 REFUTES**, and **166 NOT_ENOUGH_INFO** claims.
+- **Closed Candidate Pool**: All human-annotated gold evidence passages from the sampled claims were extracted to form a closed candidate pool of **808 unique Wikipedia passages** stored in [`data/evidence_corpus.json`](data/evidence_corpus.json). This pool comprises 639 passages originating from verifiable claims (`SUPPORTS` and `REFUTES`, representing genuine human-annotated gold evidence sentences from FEVER) and 169 candidate/proxy passages associated with `NOT_ENOUGH_INFO` claims in the 750-claim parent sample.
+- **Label Semantics**: In Experiment 2 ($k=3$ passages per claim; 1,500 total claim-evidence rows), the 443 positive proxy instances comprise **296 genuine human-annotated gold evidence passages** (154 for `SUPPORTS` and 142 for `REFUTES`) and **147 NEI candidate proxy passages** (unverified candidate passages from `copenlu/fever_gold_evidence`).
 - **Claim Retrieval Coverage**: Under hybrid retrieval with $k = 3$, **86.00%** ($430 / 500$) of claims have at least one positive label in the retrieved set. This coverage is specific to the closed pool and cannot be extrapolated to open-domain retrieval.
 
 ---
@@ -316,8 +324,8 @@ If you use this codebase or build upon this research, please cite:
   author    = {Bussotti, Jean-Flavien and Baraldi, Andrea and Guerra, Francesco and Papotti, Paolo},
   title     = {Explaining the Role of Evidence in Data-Driven Fact-Checking},
   journal   = {IEEE Access},
-  volume    = {12},
-  pages     = {37190--37204},
+  volume    = {14},
+  pages     = {127752--127765},
   year      = {2026},
   doi       = {10.1109/ACCESS.2026.3719082}
 }

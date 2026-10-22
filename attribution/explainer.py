@@ -40,8 +40,8 @@ class EvidenceExplainer:
         
     def _get_probabilities(self, claim: str, evidence_subset: List[RetrievedEvidence]) -> np.ndarray:
         """Call the verifier and return probabilities, utilizing an in-memory cache."""
-        # Use evidence IDs as cache key
-        ev_ids = tuple(sorted(ev.evidence_id for ev in evidence_subset))
+        # Use sequence of evidence IDs in their actual order as cache key
+        ev_ids = tuple(ev.evidence_id for ev in evidence_subset)
         cache_key = (claim, ev_ids)
         
         if cache_key not in self._eval_cache:
